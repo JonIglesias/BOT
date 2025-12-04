@@ -175,6 +175,38 @@ $router->post('webhooks/woocommerce', function() {
 });
 
 // ============================================================================
+// CHATBOT BOT API
+// ============================================================================
+
+// Chat endpoint - POST /bot/chat
+$router->post('bot/chat', function() {
+    require_once API_BASE_DIR . '/bot/endpoints/chat.php';
+    $endpoint = new BotChatEndpoint();
+    $endpoint->handle();
+});
+
+// Validate license - GET /bot/validate
+$router->get('bot/validate', function() {
+    require_once API_BASE_DIR . '/bot/endpoints/validate.php';
+    $endpoint = new BotValidateEndpoint();
+    $endpoint->handle();
+});
+
+// License status - GET /bot/status
+$router->get('bot/status', function() {
+    require_once API_BASE_DIR . '/bot/endpoints/status.php';
+    $endpoint = new BotStatusEndpoint();
+    $endpoint->handle();
+});
+
+// Usage stats - GET /bot/usage
+$router->get('bot/usage', function() {
+    require_once API_BASE_DIR . '/bot/endpoints/usage.php';
+    $endpoint = new BotUsageEndpoint();
+    $endpoint->handle();
+});
+
+// ============================================================================
 // CRON - AUTO SYNC
 // ============================================================================
 

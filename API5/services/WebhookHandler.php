@@ -426,7 +426,7 @@ class WebhookHandler {
 
             } else {
                 // Crear nueva licencia
-                $licenseKey = $this->generateLicenseKey($orderId, $plan['id']);
+                $licenseKey = $this->generateLicenseKey($orderId, $plan['id'], $productName);
 
                 $this->db->insert('licenses', [
                     'license_key' => $licenseKey,
@@ -507,14 +507,33 @@ class WebhookHandler {
     }
 
     /**
-     * Generar license key
-     * Formato: {order_id}-{plan_id}-{year}-{random}
-     * Ejemplo: 628-10-2025-83772E2C
+     * Generar license key con prefijo BOT o GEO
+     * Formato: {PREFIX}-{order_id}-{plan_id}-{year}-{random}
+     * Ejemplo: BOT-628-10-2025-83772E2C o GEO-628-10-2025-83772E2C
+     *
+     * @param int $orderId ID del pedido
+     * @param string $planId ID del plan
+     * @param string $productName Nombre del producto (opcional)
+     * @return string License key generada
      */
-    private function generateLicenseKey($orderId, $planId) {
+    private function generateLicenseKey($orderId, $planId, $productName = '') {
         $year = date('Y');
         $random = strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));
-        return "{$orderId}-{$planId}-{$year}-{$random}";
+
+        // Determinar prefijo basado en el producto
+        $prefix = 'GEO'; // Por defecto GeoWriter
+
+        // Si el nombre del producto o plan contiene "bot" o "chatbot", usar BOT
+        $lowerName = strtolower($productName);
+        $lowerPlan = strtolower($planId);
+
+        if (stripos($lowerName, 'bot') !== false ||
+            stripos($lowerName, 'chat') !== false ||
+            stripos($lowerPlan, 'bot') !== false) {
+            $prefix = 'BOT';
+        }
+
+        return "{$prefix}-{$orderId}-{$planId}-{$year}-{$random}";
     }
 
     // ========== HELPERS ==========

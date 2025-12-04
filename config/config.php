@@ -75,6 +75,8 @@ function phsbot_config_handle_save(){
   $g['head_btn_size']  = isset($_POST['head_btn_size'])  ? max(20, min(34, intval($_POST['head_btn_size'])))        : ($g['head_btn_size']  ?? 26);
   $g['mic_stroke_w']   = isset($_POST['mic_stroke_w'])   ? max(1,  min(3,  intval($_POST['mic_stroke_w'])))         : ($g['mic_stroke_w']   ?? 1);
 
+  $g['bot_license_key']    = isset($_POST['bot_license_key'])    ? (string) wp_unslash($_POST['bot_license_key'])    : ($g['bot_license_key']    ?? '');
+  $g['bot_api_url']        = isset($_POST['bot_api_url'])        ? esc_url_raw($_POST['bot_api_url'])                : ($g['bot_api_url']        ?? 'https://bocetosmarketing.com/API5/index.php');
   $g['openai_api_key']     = isset($_POST['openai_api_key'])     ? (string) wp_unslash($_POST['openai_api_key'])     : ($g['openai_api_key']     ?? '');
   $g['telegram_bot_token'] = isset($_POST['telegram_bot_token']) ? (string) wp_unslash($_POST['telegram_bot_token']) : ($g['telegram_bot_token'] ?? '');
   $g['telegram_chat_id']   = isset($_POST['telegram_chat_id'])   ? sanitize_text_field($_POST['telegram_chat_id'])   : ($g['telegram_chat_id']   ?? '');
@@ -237,6 +239,8 @@ function phsbot_config_render_page(){
   $c = get_option(PHSBOT_CHAT_OPT, array());     if (!is_array($c)) $c = array();
 
   // Conexiones
+  $bot_license_key    = isset($g['bot_license_key'])    ? $g['bot_license_key']    : '';
+  $bot_api_url        = isset($g['bot_api_url'])        ? $g['bot_api_url']        : 'https://bocetosmarketing.com/API5/index.php';
   $openai_api_key     = isset($g['openai_api_key'])     ? $g['openai_api_key']     : '';
   $telegram_bot_token = isset($g['telegram_bot_token']) ? $g['telegram_bot_token'] : '';
   $telegram_chat_id   = isset($g['telegram_chat_id'])   ? $g['telegram_chat_id']   : '';
@@ -547,8 +551,24 @@ $models     = !empty($api_models) ? $api_models : $fallback;
       <section id="tab-conexiones" class="phsbot-config-panel" aria-hidden="true">
         <table class="form-table" role="presentation">
           <tbody>
-            <tr><th scope="row">Token OpenAI (ChatGPT)</th>
-              <td><input type="text" name="openai_api_key" class="regular-text" value="<?php echo esc_attr($openai_api_key);?>"></td></tr>
+            <tr><th scope="row">Bot License Key</th>
+              <td>
+                <input type="text" name="bot_license_key" class="regular-text" placeholder="BOT-XXXX-XX-XXXX-XXXXXXXX" value="<?php echo esc_attr($bot_license_key);?>">
+                <p class="description">Introduce tu clave de licencia del chatbot (formato: BOT-XXXX-XX-XXXX-XXXXXXXX).</p>
+              </td>
+            </tr>
+            <tr><th scope="row">Bot API URL</th>
+              <td>
+                <input type="text" name="bot_api_url" class="regular-text" value="<?php echo esc_attr($bot_api_url);?>">
+                <p class="description">URL de la API del chatbot (por defecto: https://bocetosmarketing.com/API5/index.php).</p>
+              </td>
+            </tr>
+            <tr><th scope="row">Token OpenAI (ChatGPT) <em style="color:#999;">[Opcional]</em></th>
+              <td>
+                <input type="text" name="openai_api_key" class="regular-text" value="<?php echo esc_attr($openai_api_key);?>">
+                <p class="description">Ya no es necesario si usas la license key del bot. Se mantiene por compatibilidad.</p>
+              </td>
+            </tr>
             <tr><th scope="row">Token de Telegram</th>
               <td><input type="text" name="telegram_bot_token" class="regular-text" value="<?php echo esc_attr($telegram_bot_token);?>"></td></tr>
             <tr><th scope="row">ID de Telegram</th>
