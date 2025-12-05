@@ -365,6 +365,12 @@ JS;
             if (array_key_exists('openai_api_key', $input)) {
                 $out['openai_api_key'] = $this->sanitize_token($input['openai_api_key']);
             }
+            if (array_key_exists('bot_license_key', $input)) {
+                $out['bot_license_key'] = $this->sanitize_token($input['bot_license_key']);
+            }
+            if (array_key_exists('bot_api_url', $input)) {
+                $out['bot_api_url'] = esc_url_raw($input['bot_api_url']);
+            }
             if (array_key_exists('telegram_bot_token', $input)) {
                 $out['telegram_bot_token'] = $this->sanitize_token($input['telegram_bot_token']);
             }
