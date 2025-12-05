@@ -1,47 +1,85 @@
-/* PHSBOT Estadísticas - Estilos */
+/**
+ * PHSBOT - Estadísticas CSS
+ * Estilos inspirados en GeoWriter
+ */
 
-.phsbot-stats-wrapper {
-    margin: 20px 20px 20px 0;
+/* ============================================
+   ESTRUCTURA PRINCIPAL
+   ============================================ */
+
+.phsbot-module-wrap {
+    max-width: 1400px;
+    margin: 20px 0;
 }
 
-.phsbot-stats-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #ddd;
+.phsbot-module-header {
+    background: linear-gradient(135deg, #667a3a 0%, #4c5e27 100%);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 8px;
+    margin: 0 0 24px 0;
 }
 
-.phsbot-stats-header h1 {
+.phsbot-module-header h1 {
+    color: white;
     margin: 0;
     font-size: 24px;
     font-weight: 600;
 }
 
-.phsbot-stats-controls {
-    display: flex;
-    gap: 12px;
-    align-items: center;
+.phsbot-module-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
 }
+
+.phsbot-module-content {
+    background: transparent;
+}
+
+/* ============================================
+   CONTROLES DEL HEADER
+   ============================================ */
 
 .phsbot-period-select {
-    padding: 6px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
     font-size: 14px;
+    min-width: 280px;
+    cursor: pointer;
 }
 
-.phsbot-stats-container {
-    max-width: 1400px;
+.phsbot-period-select option {
+    background: #4c5e27;
+    color: white;
 }
 
-/* Grid de 3 columnas */
+#refresh-stats {
+    background: rgb(0, 0, 0) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 8px !important;
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+}
+
+#refresh-stats:hover {
+    background: rgb(20, 20, 20) !important;
+}
+
+/* ============================================
+   GRID DE 3 CARDS
+   ============================================ */
+
 .phsbot-stats-grid-3 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 
 @media (max-width: 1200px) {
@@ -50,51 +88,68 @@
     }
 }
 
-/* Cards */
+/* ============================================
+   CARDS GENERALES
+   ============================================ */
+
 .phsbot-stat-card {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
+    background: white;
+    border: 2px solid #E5E7EB;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
 }
 
-.phsbot-stat-card.phsbot-card-full {
-    grid-column: 1 / -1;
+.phsbot-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.phsbot-card-body {
+    padding: 24px;
 }
 
 .phsbot-card-header {
-    padding: 15px 20px;
-    border-bottom: 1px solid #eee;
-    background: #f9f9f9;
+    padding: 16px 24px;
+    border-bottom: 2px solid #E5E7EB;
+    background: #F9FAFB;
 }
 
 .phsbot-card-header h3 {
     margin: 0;
     font-size: 16px;
     font-weight: 600;
+    color: #1F2937;
 }
 
-.phsbot-card-body {
-    padding: 20px;
+.phsbot-card-full {
+    grid-column: 1 / -1;
 }
 
-/* Card del Plan */
-.phsbot-card-plan {
+/* ============================================
+   CARD 1: PLAN (Fondo Azul/Verde)
+   ============================================ */
+
+.phsbot-card-plan-blue {
     background: linear-gradient(135deg, #667a3a 0%, #4c5e27 100%);
-    color: #fff;
+    border: none;
+    color: white;
+}
+
+.phsbot-card-plan-blue .phsbot-card-body {
+    min-height: 220px;
 }
 
 .phsbot-plan-info {
-    min-height: 180px;
+    color: white;
 }
 
 .phsbot-plan-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .phsbot-plan-row:last-child {
@@ -103,181 +158,291 @@
 
 .phsbot-plan-label {
     font-size: 13px;
-    opacity: 0.8;
+    opacity: 0.85;
+    font-weight: 500;
 }
 
 .phsbot-plan-value {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
+    text-align: right;
 }
 
 .phsbot-plan-name {
-    font-size: 18px;
-    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
 }
 
-.phsbot-days {
-    font-size: 13px;
-    opacity: 0.9;
+/* ============================================
+   CARD 2: GRÁFICO
+   ============================================ */
+
+.phsbot-card-chart {
+    border-color: #E5E7EB;
 }
 
-/* Card del Gráfico */
 .phsbot-card-chart .phsbot-card-body {
-    padding: 15px;
-    height: 240px;
+    padding: 20px;
+    height: 280px;
 }
 
-/* Card de Tokens */
-.phsbot-card-tokens .phsbot-card-body {
+/* ============================================
+   CARD 3: TOKENS CON ANIMACIÓN DE LÍQUIDO
+   ============================================ */
+
+.phsbot-card-tokens-liquid {
+    border-color: #E5E7EB;
+    background: white;
+}
+
+.phsbot-card-tokens-liquid .phsbot-card-body {
+    padding: 30px;
+    min-height: 220px;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 200px;
 }
 
-#tokens-display {
-    width: 100%;
-    max-width: 200px;
-}
-
-.tokens-circle {
+#tokens-liquid-container {
     position: relative;
     width: 100%;
-    padding-bottom: 100%;
+    max-width: 200px;
+    aspect-ratio: 1;
 }
 
-.tokens-circle svg {
+#liquid-svg {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    transform: rotate(-90deg);
+    border-radius: 50%;
+    overflow: hidden;
 }
 
-.tokens-bg {
-    fill: none;
-    stroke: #e0e0e0;
-    stroke-width: 8;
+#liquid-wave {
+    transition: opacity 0.3s ease;
 }
 
-.tokens-progress {
-    fill: none;
-    stroke: #4CAF50;
-    stroke-width: 8;
-    stroke-linecap: round;
-    stroke-dasharray: 282.6;
-    stroke-dashoffset: 0;
-    transition: stroke-dashoffset 1s ease, stroke 0.3s ease;
-}
-
-.tokens-text {
+/* Textos superpuestos */
+#tokens-available-green,
+#tokens-available-white {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
+    width: 100%;
+    padding: 0 20px;
+    pointer-events: none;
+}
+
+/* Texto verde (visible donde NO hay líquido) */
+#tokens-available-green {
+    color: #667a3a;
+    z-index: 2;
+}
+
+/* Texto blanco (visible donde SÍ hay líquido) */
+#tokens-available-white {
+    color: white;
+    z-index: 3;
+    clip-path: inset(100% 0 0 0); /* Inicialmente oculto */
 }
 
 .tokens-number {
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 700;
-    color: #333;
-    margin-bottom: 5px;
+    line-height: 1.2;
+    margin-bottom: 4px;
 }
 
 .tokens-label {
     font-size: 12px;
-    color: #666;
-}
-
-/* Resumen de Actividad */
-.phsbot-stats-summary {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-}
-
-@media (max-width: 900px) {
-    .phsbot-stats-summary {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-.phsbot-summary-item {
-    text-align: center;
-    padding: 20px;
-    background: #f9f9f9;
-    border-radius: 8px;
-}
-
-.phsbot-summary-value {
-    font-size: 32px;
-    font-weight: 700;
-    color: #667a3a;
-    margin-bottom: 5px;
-}
-
-.phsbot-summary-label {
-    font-size: 13px;
-    color: #666;
+    opacity: 0.9;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    font-weight: 500;
 }
 
-/* Tabla de Operaciones */
-.phsbot-ops-table {
+/* ============================================
+   TABLA DE OPERACIONES
+   ============================================ */
+
+.phsbot-operations-table {
     width: 100%;
     border-collapse: collapse;
-}
-
-.phsbot-ops-table thead th {
-    background: #f9f9f9;
-    padding: 12px;
-    text-align: left;
-    font-weight: 600;
-    font-size: 13px;
-    border-bottom: 2px solid #ddd;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.phsbot-ops-table tbody tr {
-    border-bottom: 1px solid #eee;
-}
-
-.phsbot-ops-table tbody tr:hover {
-    background: #f9f9f9;
-}
-
-.phsbot-ops-table tbody td {
-    padding: 12px;
     font-size: 14px;
 }
 
-/* Estados */
+.phsbot-operations-table thead th {
+    background: #F9FAFB;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    color: #374151;
+    border-bottom: 2px solid #E5E7EB;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.phsbot-operations-table tbody tr {
+    border-bottom: 1px solid #F3F4F6;
+    transition: background 0.15s;
+}
+
+.phsbot-operations-table tbody tr:hover {
+    background: #F9FAFB;
+}
+
+.phsbot-operations-table tbody td {
+    padding: 14px 16px;
+    color: #1F2937;
+}
+
+.phsbot-text-right {
+    text-align: right;
+}
+
+.phsbot-number {
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+}
+
+/* Toggle de detalles */
+.phsbot-toggle-cell {
+    width: 40px;
+    padding: 14px 8px !important;
+}
+
+.phsbot-toggle-icon {
+    display: inline-block;
+    font-size: 12px;
+    color: #667a3a;
+    cursor: pointer;
+    transition: transform 0.2s;
+    user-select: none;
+}
+
+.phsbot-toggle-icon.expanded {
+    transform: rotate(90deg);
+}
+
+/* Pastilla de campaña */
+.phsbot-op-campaign {
+    display: inline-block;
+}
+
+.phsbot-campaign-pill {
+    background: linear-gradient(135deg, #667a3a 0%, #4c5e27 100%);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-block;
+    transition: all 0.2s;
+}
+
+.phsbot-campaign-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 122, 58, 0.3);
+}
+
+/* Botón "Ver detalle" */
+.phsbot-op-toggle {
+    color: #667a3a;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.phsbot-op-toggle:hover {
+    color: #4c5e27;
+    text-decoration: underline;
+}
+
+/* Fila de detalles expandibles */
+.phsbot-op-details-row {
+    background: #F9FAFB !important;
+}
+
+.phsbot-op-details {
+    padding: 24px 32px !important;
+}
+
+.phsbot-queue-item {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.phsbot-queue-item:last-child {
+    margin-bottom: 0;
+}
+
+.phsbot-queue-header {
+    font-weight: 600;
+    color: #1F2937;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.phsbot-queue-subitems {
+    display: grid;
+    gap: 8px;
+}
+
+.phsbot-subitem {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #F9FAFB;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+/* ============================================
+   ESTADOS: LOADING, ERROR, EMPTY
+   ============================================ */
+
 .phsbot-loading {
     text-align: center;
-    padding: 40px 20px;
-    color: #666;
+    padding: 60px 20px;
+    color: #6B7280;
     font-size: 14px;
 }
 
 .phsbot-loading::before {
     content: "⏳ ";
-    margin-right: 5px;
+    font-size: 20px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.phsbot-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.phsbot-empty-state-text {
+    color: #9CA3AF;
+    font-size: 14px;
 }
 
 .phsbot-error {
     text-align: center;
     padding: 40px 20px;
-    color: #d32f2f;
+    color: #DC2626;
     font-size: 14px;
-}
-
-.phsbot-empty {
-    text-align: center;
-    padding: 40px 20px;
-    color: #999;
-    font-size: 14px;
+    background: #FEF2F2;
+    border: 1px solid #FEE2E2;
+    border-radius: 8px;
 }
