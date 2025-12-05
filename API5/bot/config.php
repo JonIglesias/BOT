@@ -2,19 +2,18 @@
 /**
  * Chatbot API - Configuración específica
  *
- * @version 2.0 - Ahora lee configuración desde archivo JSON
+ * @version 3.0 - Ahora lee configuración desde base de datos
  */
 
 // Prevenir acceso directo
 defined('API_ACCESS') or die('Direct access not permitted');
 
 // ============================================================================
-// CONFIGURACIÓN DEL CHATBOT (desde archivo JSON)
+// CONFIGURACIÓN DEL CHATBOT (desde base de datos)
 // ============================================================================
 
-// Función para cargar settings desde archivo JSON
+// Función para cargar settings desde base de datos
 function bot_load_settings() {
-    $settingsFile = __DIR__ . '/bot-settings.json';
     $defaults = [
         'model' => 'gpt-4o',
         'temperature' => 0.7,
@@ -23,22 +22,35 @@ function bot_load_settings() {
         'max_history' => 10
     ];
 
-    if (!file_exists($settingsFile)) {
+    try {
+        require_once __DIR__ . '/../core/Database.php';
+        $db = Database::getInstance();
+
+        $stmt = $db->prepare("SELECT setting_key, setting_value FROM " . DB_PREFIX . "settings WHERE setting_key IN (
+            'bot_ai_model', 'bot_ai_temperature', 'bot_ai_max_tokens', 'bot_ai_tone', 'bot_ai_max_history'
+        )");
+        $stmt->execute();
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $settings = [];
+        foreach ($results as $row) {
+            // Convertir key de BD a formato interno
+            $key = str_replace('bot_ai_', '', $row['setting_key']);
+            $settings[$key] = $row['setting_value'];
+        }
+
+        // Convertir tipos de datos
+        if (isset($settings['temperature'])) $settings['temperature'] = floatval($settings['temperature']);
+        if (isset($settings['max_tokens'])) $settings['max_tokens'] = intval($settings['max_tokens']);
+        if (isset($settings['max_history'])) $settings['max_history'] = intval($settings['max_history']);
+
+        // Merge con defaults
+        return array_merge($defaults, $settings);
+
+    } catch (Exception $e) {
+        // Si falla la BD, usar defaults
         return $defaults;
     }
-
-    $json = @file_get_contents($settingsFile);
-    if ($json === false) {
-        return $defaults;
-    }
-
-    $settings = @json_decode($json, true);
-    if (!is_array($settings)) {
-        return $defaults;
-    }
-
-    // Merge con defaults para campos faltantes
-    return array_merge($defaults, $settings);
 }
 
 // Cargar settings
