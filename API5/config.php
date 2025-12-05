@@ -121,13 +121,58 @@ define('ENABLE_WEBHOOK_LOG', true);
 define('ADMIN_SESSION_TIMEOUT', 7200); // 2 horas
 
 // ============================================================================
-// CONFIGURACIÓN DE OPENAI (LEGACY - ahora se usa la definición de línea 28)
+// CONFIGURACIÓN DE OPENAI PARA GEOWRITER (desde base de datos)
 // ============================================================================
 
 // OPENAI_API_KEY ya está definido en línea 28 con getenv()
-define('OPENAI_MODEL', 'gpt-4o-mini');
-define('OPENAI_MAX_TOKENS', 4000);
-define('OPENAI_TEMPERATURE', 0.7);
+
+// Función para cargar settings de GeoWriter desde base de datos
+function geowriter_load_settings() {
+    $defaults = [
+        'model' => 'gpt-4o-mini',
+        'temperature' => 0.7,
+        'max_tokens' => 2000,
+        'tone' => 'profesional'
+    ];
+
+    try {
+        require_once __DIR__ . '/core/Database.php';
+        $db = Database::getInstance();
+
+        $stmt = $db->prepare("SELECT setting_key, setting_value FROM " . DB_PREFIX . "settings WHERE setting_key IN (
+            'geowrite_ai_model', 'geowrite_ai_temperature', 'geowrite_ai_max_tokens', 'geowrite_ai_tone'
+        )");
+        $stmt->execute();
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $settings = [];
+        foreach ($results as $row) {
+            // Convertir key de BD a formato interno
+            $key = str_replace('geowrite_ai_', '', $row['setting_key']);
+            $settings[$key] = $row['setting_value'];
+        }
+
+        // Convertir tipos de datos
+        if (isset($settings['temperature'])) $settings['temperature'] = floatval($settings['temperature']);
+        if (isset($settings['max_tokens'])) $settings['max_tokens'] = intval($settings['max_tokens']);
+
+        // Merge con defaults
+        return array_merge($defaults, $settings);
+
+    } catch (Exception $e) {
+        // Si falla la BD, usar defaults
+        return $defaults;
+    }
+}
+
+// Cargar settings de GeoWriter
+$GEOWRITER_SETTINGS = geowriter_load_settings();
+
+// Definir constantes desde settings
+define('OPENAI_MODEL', $GEOWRITER_SETTINGS['model']);
+define('OPENAI_MAX_TOKENS', $GEOWRITER_SETTINGS['max_tokens']);
+define('OPENAI_TEMPERATURE', $GEOWRITER_SETTINGS['temperature']);
+define('OPENAI_TONE', $GEOWRITER_SETTINGS['tone']);
 
 // ============================================================================
 // CONFIGURACIÓN GENERAL
