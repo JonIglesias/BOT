@@ -555,7 +555,6 @@ $models     = !empty($api_models) ? $api_models : $fallback;
               <td>
                 <input type="text" name="bot_license_key" id="bot_license_key" class="regular-text" placeholder="BOT-XXXX-XX-XXXX-XXXXXXXX" value="<?php echo esc_attr($bot_license_key);?>">
                 <button type="button" class="button" id="phsbot-validate-license">Validar Licencia</button>
-                <div id="phsbot-license-status" style="margin-top:10px;"></div>
                 <p class="description">Introduce tu clave de licencia del chatbot (formato: BOT-XXXX-XX-XXXX-XXXXXXXX).</p>
               </td>
             </tr>
@@ -577,6 +576,9 @@ $models     = !empty($api_models) ? $api_models : $fallback;
 
       <?php submit_button('Guardar configuración'); ?>
     </form>
+
+    <!-- Status de validación de licencia (fuera del form para evitar problemas con POST) -->
+    <div id="phsbot-license-status" style="margin-top:20px; max-width:800px;"></div>
   </div>
 <?php
 }
