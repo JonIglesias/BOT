@@ -78,6 +78,7 @@ try {
                     } else {
                         $error = "⚠️ Error al sincronizar: {$result['error']}";
                     }
+                    // No hacer redirect, mostrar mensaje directamente
                     break;
             }
         }
