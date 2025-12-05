@@ -117,31 +117,40 @@ if (!function_exists('phsbot_leads_admin_page')) {
 
         $active_tab = (isset($_GET['tab']) && $_GET['tab'] === 'settings') ? 'settings' : 'leads';
 
-        if (!empty($_GET['phsbot_saved'])) {
-            echo '<div class="notice notice-success is-dismissible"><p>'.esc_html__('Ajustes guardados.', 'phsbot').'</p></div>';
-        }
+        echo '<div class="wrap phsbot-module-wrap">';
 
-        echo '<div class="wrap phsbot-wrap">';
-        echo '  <h1 class="wp-heading-inline">'.esc_html__('Leads & Scoring','phsbot').'</h1>';
+        // Header gris estilo GeoWriter
+        echo '  <div class="phsbot-module-header" style="display: flex; justify-content: space-between; align-items: center;">';
+        echo '    <h1 style="margin: 0;">'.esc_html__('Leads & Scoring','phsbot').'</h1>';
+        echo '  </div>';
+
+        if (!empty($_GET['phsbot_saved'])) {
+            echo '<div class="phsbot-alert phsbot-alert-success">'.esc_html__('Ajustes guardados.', 'phsbot').'</div>';
+        }
 
         $leads_url    = add_query_arg(array('page'=>'phsbot-leads','tab'=>'leads'), admin_url('admin.php'));
         $settings_url = add_query_arg(array('page'=>'phsbot-leads','tab'=>'settings'), admin_url('admin.php'));
-        echo '  <h2 class="nav-tab-wrapper" style="margin-top:12px">';
+        echo '  <h2 class="nav-tab-wrapper" style="margin-bottom:24px">';
         echo '    <a href="'.esc_url($leads_url).'" class="nav-tab '.($active_tab==='leads'?'nav-tab-active':'').'">'.esc_html__('Leads','phsbot').'</a>';
         echo '    <a href="'.esc_url($settings_url).'" class="nav-tab '.($active_tab==='settings'?'nav-tab-active':'').'">'.esc_html__('Configuración','phsbot').'</a>';
         echo '  </h2>';
 
         if ($active_tab === 'settings') {
+            echo '  <div class="phsbot-module-container">';
+            echo '    <div class="phsbot-module-content">';
             if (function_exists('phsbot_leads_render_settings_panel')) {
                 phsbot_leads_render_settings_panel();
             } else {
                 echo '<p>'.esc_html__('No hay panel de ajustes disponible.', 'phsbot').'</p>';
             }
+            echo '    </div>';
+            echo '  </div>';
             echo '</div>';
             return;
         }
 
-        echo '  <hr class="wp-header-end" />';
+        echo '  <div class="phsbot-module-container">';
+        echo '    <div class="phsbot-module-content">';
 
         // Datos
         $map  = function_exists('phsbot_leads_all') ? phsbot_leads_all() : array();
@@ -214,6 +223,8 @@ if (!function_exists('phsbot_leads_admin_page')) {
         echo '    <button class="button button-primary" id="phsbot-leads-del-selected">'.esc_html__('Borrar seleccionados','phsbot').'</button>';
         echo '  </div>';
 
-        echo '</div>';
+        echo '    </div>'; // .phsbot-module-content
+        echo '  </div>'; // .phsbot-module-container
+        echo '</div>'; // .wrap.phsbot-module-wrap
     }
 }
