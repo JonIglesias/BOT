@@ -108,18 +108,13 @@ function phsbot_config_handle_save(){
   // -------- Ajustes del Chat (IA) --------
   $c = get_option(PHSBOT_CHAT_OPT, array()); if (!is_array($c)) $c = array();
 
-  $c['model']            = isset($_POST['chat_model'])         ? sanitize_text_field($_POST['chat_model'])         : ($c['model']            ?? 'gpt-4o-mini');
-  $c['temperature']      = isset($_POST['chat_temperature'])   ? max(0.0, min(2.0, floatval($_POST['chat_temperature']))) : ($c['temperature'] ?? 0.5);
-  $c['tone']             = isset($_POST['chat_tone'])          ? sanitize_text_field($_POST['chat_tone'])          : ($c['tone']             ?? 'profesional');
+  // Solo guardar mensajes y opciones avanzadas (modelo configurado desde API)
   $c['welcome']          = isset($_POST['chat_welcome'])       ? wp_kses_post($_POST['chat_welcome'])              : ($c['welcome']          ?? 'Hola, soy PHSBot. ¿En qué puedo ayudarte?');
   $c['system_prompt']    = isset($_POST['chat_system_prompt']) ? wp_kses_post($_POST['chat_system_prompt'])         : ($c['system_prompt']    ?? '');
   // Checkboxes: si está en POST = 1, si no está en POST = 0
   $c['allow_html']       = isset($_POST['chat_allow_html'])       ? 1 : 0;
   $c['allow_elementor']  = isset($_POST['chat_allow_elementor'])  ? 1 : 0;
   $c['allow_live_fetch'] = isset($_POST['chat_allow_live_fetch']) ? 1 : 0;
-  $c['max_history']      = isset($_POST['chat_max_history'])   ? max(1, intval($_POST['chat_max_history']))        : ($c['max_history']      ?? 10);
-  $c['max_tokens']       = isset($_POST['chat_max_tokens'])    ? max(200, intval($_POST['chat_max_tokens']))       : ($c['max_tokens']       ?? 1400);
-  $c['max_height_vh']    = isset($_POST['chat_max_height_vh']) ? max(50, intval($_POST['chat_max_height_vh']))     : ($c['max_height_vh']    ?? 70);
 
   update_option(PHSBOT_CHAT_OPT, $c, false);
 
@@ -257,19 +252,13 @@ function phsbot_config_render_page(){
   $head_btn_size = isset($g['head_btn_size']) ? intval($g['head_btn_size']) : 26;
   $mic_stroke_w  = isset($g['mic_stroke_w'])  ? intval($g['mic_stroke_w'])  : 1;
 
-  // Chat (IA)
-  $chat_model           = isset($c['model']) ? $c['model'] : 'gpt-4o-mini';
-  $chat_temperature     = isset($c['temperature']) ? floatval($c['temperature']) : 0.5;
-  $chat_tone            = isset($c['tone']) ? $c['tone'] : 'profesional';
+  // Chat (IA) - Solo mensajes y opciones avanzadas (modelo configurado desde API)
   $chat_welcome         = isset($c['welcome']) ? $c['welcome'] : 'Hola, soy PHSBot. ¿En qué puedo ayudarte?';
   $chat_system_prompt   = isset($c['system_prompt']) ? $c['system_prompt'] : '';
   // Valores por defecto = true (marcados) si no hay valor guardado
   $chat_allow_html      = isset($c['allow_html'])       ? (bool)$c['allow_html']       : true;
   $chat_allow_elementor = isset($c['allow_elementor'])  ? (bool)$c['allow_elementor']  : true;
   $chat_allow_live_fetch= isset($c['allow_live_fetch']) ? (bool)$c['allow_live_fetch'] : true;
-  $chat_max_history     = isset($c['max_history']) ? intval($c['max_history']) : 10;
-  $chat_max_tokens      = isset($c['max_tokens']) ? intval($c['max_tokens']) : 1400;
-  $chat_max_height_vh   = isset($c['max_height_vh']) ? intval($c['max_height_vh']) : 70;
 
   // Normaliza tamaños px
   $w_px = intval(preg_replace('/[^0-9]/','', $chat_width));
@@ -452,82 +441,9 @@ PHSBOT_DEF;
         <div class="phsbot-module-container">
           <div class="phsbot-module-content">
             <div class="phsbot-mega-card" style="padding: 32px;">
-              
-              <!-- Sección: Configuración del Modelo -->
-              <div class="phsbot-section">
-                <h2 class="phsbot-section-title">Configuración del Modelo</h2>
-                
-                <?php
-                $api_models = phsbot_openai_list_chat_models();
-                $license_info = phsbot_get_license_info();
-                $has_license = ($license_info['license_key'] !== '');
-                $fallback = array('gpt-5','gpt-5-mini','gpt-4o','gpt-4o-mini','gpt-4.1','gpt-4.1-mini');
-                $models = !empty($api_models) ? $api_models : $fallback;
-                ?>
-
-                <div class="phsbot-grid-2">
-                  <div class="phsbot-field">
-                    <label class="phsbot-label" for="chat_model">Modelo</label>
-                    <select name="chat_model" id="chat_model" class="phsbot-select-field">
-                      <?php foreach ($models as $mid): ?>
-                        <option value="<?php echo esc_attr($mid); ?>" <?php selected($chat_model, $mid); ?>>
-                          <?php echo esc_html(phsbot_openai_model_label($mid)); ?>
-                        </option>
-                      <?php endforeach; ?>
-                      <?php if (!empty($chat_model) && !in_array($chat_model, $models, true)): ?>
-                        <option value="<?php echo esc_attr($chat_model); ?>" selected>
-                          <?php echo esc_html('Personalizado: '.$chat_model); ?>
-                        </option>
-                      <?php endif; ?>
-                    </select>
-                    <p class="phsbot-description">
-                      <?php if (!$has_license): ?>
-                        Sin licencia BOT: mostrando lista sugerida.
-                      <?php else: ?>
-                        Lista obtenida vía API5.
-                      <?php endif; ?>
-                    </p>
-                  </div>
-
-                  <div class="phsbot-field">
-                    <label class="phsbot-label" for="chat_temperature">Temperatura (0-2)</label>
-                    <input type="number" 
-                           step="0.05" 
-                           min="0" 
-                           max="2" 
-                           name="chat_temperature" 
-                           id="chat_temperature" 
-                           class="phsbot-input-field" 
-                           value="<?php echo esc_attr($chat_temperature);?>">
-                  </div>
-                </div>
-
-                <div class="phsbot-grid-2">
-                  <div class="phsbot-field">
-                    <label class="phsbot-label" for="chat_max_tokens">Máx. tokens de respuesta</label>
-                    <input type="number" 
-                           min="200" 
-                           step="50" 
-                           name="chat_max_tokens" 
-                           id="chat_max_tokens" 
-                           class="phsbot-input-field" 
-                           value="<?php echo esc_attr($chat_max_tokens);?>">
-                    <p class="phsbot-description">Límite de tokens para la completion del asistente.</p>
-                  </div>
-
-                  <div class="phsbot-field">
-                    <label class="phsbot-label" for="chat_tone">Tono</label>
-                    <input type="text" 
-                           name="chat_tone" 
-                           id="chat_tone" 
-                           class="phsbot-input-field" 
-                           value="<?php echo esc_attr($chat_tone);?>">
-                  </div>
-                </div>
-              </div>
 
               <!-- Sección: Mensajes -->
-              <div class="phsbot-section" style="margin-top: 32px;">
+              <div class="phsbot-section">
                 <h2 class="phsbot-section-title">Mensajes</h2>
 
                 <div class="phsbot-field">
