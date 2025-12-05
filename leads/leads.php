@@ -70,7 +70,15 @@ add_action('admin_enqueue_scripts', function(){
     $vcss = @filemtime($base.'leads.css') ?: time();
     $vjs  = @filemtime($base.'leads.js')  ?: time();
 
-    wp_enqueue_style('phsbot-leads-css', $url.'leads.css', array(), $vcss);
+    // CSS unificado (cargar primero)
+    wp_enqueue_style(
+        'phsbot-modules-unified',
+        plugin_dir_url(dirname(__FILE__)) . 'core/assets/modules-unified.css',
+        array(),
+        '1.4'
+    );
+
+    wp_enqueue_style('phsbot-leads-css', $url.'leads.css', array('phsbot-modules-unified'), $vcss);
     wp_enqueue_script('phsbot-leads-js', $url.'leads.js', array('jquery'), $vjs, true);
 
     // Puede que settings.php aún no exista; protegemos la llamada

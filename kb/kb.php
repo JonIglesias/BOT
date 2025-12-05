@@ -33,7 +33,15 @@ function phsbot_kb_admin_enqueue($hook){
     $ver_js    = file_exists($base_dir . '/kb/kb.js')  ? filemtime($base_dir . '/kb/kb.js')  : '2.6.0';
     $ver_css   = file_exists($base_dir . '/kb/kb.css') ? filemtime($base_dir . '/kb/kb.css') : '2.6.0';
 
-    wp_enqueue_style ('phsbot-kb-css', plugins_url('kb/kb.css', $main_file), [], $ver_css);
+    // CSS unificado (cargar primero)
+    wp_enqueue_style(
+        'phsbot-modules-unified',
+        plugins_url('core/assets/modules-unified.css', $main_file),
+        [],
+        '1.4'
+    );
+
+    wp_enqueue_style ('phsbot-kb-css', plugins_url('kb/kb.css', $main_file), ['phsbot-modules-unified'], $ver_css);
     wp_enqueue_script('phsbot-kb-js',  plugins_url('kb/kb.js',  $main_file), ['jquery'], $ver_js, true);
 
     $models    = phsbot_kb_get_models(false);
