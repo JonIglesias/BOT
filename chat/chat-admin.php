@@ -56,26 +56,111 @@ function phsbot_render_chat_settings(){
 
   $opt = phsbot_chat_get_settings();
   ?>
-  <div class="wrap">
-    <h1>Chat & Widget (FLOAT)</h1>
-    <?php if ($saved): ?><div class="notice notice-success"><p>Guardado ✅</p></div><?php endif; ?>
-    <form method="post">
-      <?php wp_nonce_field('phsbot_chat_save','phsbot_chat_nonce'); ?>
-      <table class="form-table">
-        <tr><th scope="row">Modelo</th><td><input type="text" name="model" value="<?php echo esc_attr($opt['model']); ?>" class="regular-text"></td></tr>
-        <tr><th scope="row">Temperatura</th><td><input type="number" step="0.1" name="temperature" value="<?php echo esc_attr($opt['temperature']); ?>" class="small-text"> (0–2)</td></tr>
-        <tr><th scope="row">Tono</th><td><input type="text" name="tone" value="<?php echo esc_attr($opt['tone']); ?>" class="regular-text"></td></tr>
-        <tr><th scope="row">Saludo</th><td><textarea name="welcome" rows="2" class="large-text"><?php echo esc_textarea($opt['welcome']); ?></textarea></td></tr>
-        <tr><th scope="row">Permitir HTML</th><td><label><input type="checkbox" name="allow_html" value="1" <?php checked($opt['allow_html'],1); ?>> Sí</label></td></tr>
-        <tr><th scope="row">Integración Elementor</th><td><label><input type="checkbox" name="allow_elementor" value="1" <?php checked($opt['allow_elementor'],1); ?>> Sí</label></td></tr>
-        <tr><th scope="row">Live fetch (URL actual)</th><td><label><input type="checkbox" name="allow_live_fetch" value="1" <?php checked($opt['allow_live_fetch'],1); ?>> Sí</label></td></tr>
-        <tr><th scope="row">Histórico (turnos)</th><td><input type="number" name="max_history" value="<?php echo esc_attr($opt['max_history']); ?>" class="small-text"></td></tr>
-        <tr><th scope="row">Máx. tokens</th><td><input type="number" name="max_tokens" value="<?php echo esc_attr($opt['max_tokens']); ?>" class="small-text"></td></tr>
-        <tr><th scope="row">Altura máx. (%VH)</th><td><input type="number" name="max_height_vh" value="<?php echo esc_attr($opt['max_height_vh']); ?>" class="small-text"> (50–95)</td></tr>
-        <tr><th scope="row">Anclar al 1er párrafo</th><td><label><input type="checkbox" name="anchor_paragraph" value="1" <?php checked($opt['anchor_paragraph'],1); ?>> Sí</label></td></tr>
-      </table>
-      <p><button class="button button-primary">Guardar cambios</button></p>
-    </form>
+  <div class="wrap phsbot-module-wrap">
+    <!-- Header gris estilo GeoWriter -->
+    <div class="phsbot-module-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <h1 style="margin: 0;">Chat & Widget</h1>
+    </div>
+
+    <?php if ($saved): ?>
+      <div class="phsbot-alert phsbot-alert-success">Configuración guardada correctamente.</div>
+    <?php endif; ?>
+
+    <div class="phsbot-module-container">
+      <div class="phsbot-module-content">
+        <form method="post">
+          <?php wp_nonce_field('phsbot_chat_save','phsbot_chat_nonce'); ?>
+
+          <div class="phsbot-mega-card" style="padding: 32px;">
+            <div class="phsbot-section">
+              <h2 class="phsbot-section-title">Configuración del Modelo</h2>
+
+              <div class="phsbot-grid-2">
+                <div class="phsbot-field">
+                  <label class="phsbot-label" for="model">Modelo</label>
+                  <input type="text" name="model" id="model" class="phsbot-input-field" value="<?php echo esc_attr($opt['model']); ?>">
+                </div>
+
+                <div class="phsbot-field">
+                  <label class="phsbot-label" for="temperature">Temperatura (0-2)</label>
+                  <input type="number" step="0.1" name="temperature" id="temperature" class="phsbot-input-field" value="<?php echo esc_attr($opt['temperature']); ?>">
+                </div>
+              </div>
+
+              <div class="phsbot-grid-2">
+                <div class="phsbot-field">
+                  <label class="phsbot-label" for="max_tokens">Máx. Tokens</label>
+                  <input type="number" name="max_tokens" id="max_tokens" class="phsbot-input-field" value="<?php echo esc_attr($opt['max_tokens']); ?>">
+                </div>
+
+                <div class="phsbot-field">
+                  <label class="phsbot-label" for="max_history">Histórico (turnos)</label>
+                  <input type="number" name="max_history" id="max_history" class="phsbot-input-field" value="<?php echo esc_attr($opt['max_history']); ?>">
+                </div>
+              </div>
+
+              <div class="phsbot-grid-2">
+                <div class="phsbot-field">
+                  <label class="phsbot-label" for="tone">Tono</label>
+                  <input type="text" name="tone" id="tone" class="phsbot-input-field" value="<?php echo esc_attr($opt['tone']); ?>">
+                </div>
+
+                <div class="phsbot-field">
+                  <label class="phsbot-label" for="max_height_vh">Altura máx. (%VH)</label>
+                  <input type="number" name="max_height_vh" id="max_height_vh" class="phsbot-input-field" value="<?php echo esc_attr($opt['max_height_vh']); ?>" min="50" max="95">
+                  <p class="phsbot-description">Entre 50 y 95</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="phsbot-section" style="margin-top: 32px;">
+              <h2 class="phsbot-section-title">Mensajes</h2>
+
+              <div class="phsbot-field">
+                <label class="phsbot-label" for="welcome">Mensaje de Bienvenida</label>
+                <textarea name="welcome" id="welcome" rows="2" class="phsbot-textarea-field"><?php echo esc_textarea($opt['welcome']); ?></textarea>
+              </div>
+            </div>
+
+            <div class="phsbot-section" style="margin-top: 32px;">
+              <h2 class="phsbot-section-title">Opciones Avanzadas</h2>
+
+              <div class="phsbot-field">
+                <label>
+                  <input type="checkbox" name="allow_html" value="1" <?php checked($opt['allow_html'],1); ?>>
+                  Permitir HTML en respuestas
+                </label>
+              </div>
+
+              <div class="phsbot-field">
+                <label>
+                  <input type="checkbox" name="allow_elementor" value="1" <?php checked($opt['allow_elementor'],1); ?>>
+                  Integración con Elementor
+                </label>
+              </div>
+
+              <div class="phsbot-field">
+                <label>
+                  <input type="checkbox" name="allow_live_fetch" value="1" <?php checked($opt['allow_live_fetch'],1); ?>>
+                  Live fetch (obtener URL actual)
+                </label>
+              </div>
+
+              <div class="phsbot-field">
+                <label>
+                  <input type="checkbox" name="anchor_paragraph" value="1" <?php checked($opt['anchor_paragraph'],1); ?>>
+                  Anclar al primer párrafo
+                </label>
+              </div>
+            </div>
+
+            <div class="phsbot-section" style="margin-top: 32px; border: none; padding: 0;">
+              <button type="submit" class="phsbot-btn-save">Guardar Cambios</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
   <?php
 }
