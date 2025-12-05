@@ -42,7 +42,17 @@ function phsbot_config_enqueue($hook_suffix){
   wp_enqueue_script('wp-color-picker');
 
   $base = plugin_dir_url(__FILE__);
-  wp_enqueue_style ('phsbot-config',  $base.'config.css', array(), '1.3.2', 'all');
+
+  // CSS unificado (cargar primero)
+  wp_enqueue_style(
+    'phsbot-modules-unified',
+    plugin_dir_url(dirname(__FILE__)) . 'core/assets/modules-unified.css',
+    array(),
+    '1.4',
+    'all'
+  );
+
+  wp_enqueue_style ('phsbot-config',  $base.'config.css', array('phsbot-modules-unified'), '1.3.2', 'all');
   wp_enqueue_script('phsbot-config',  $base.'config.js',  array('jquery','wp-color-picker'), '1.3.2', true);
 }
 /* ========FIN ENQUEUE DE ASSETS ===== */

@@ -1,0 +1,715 @@
+/**
+ * PHSBOT - Unified Modules CSS
+ * ===================================
+ * Archivo centralizado de estilos para todos los módulos UI
+ * Basado en la estructura de GeoWriter pero con colores del chatbot
+ *
+ * Colores del chatbot:
+ * - Primary: #667a3a (verde)
+ * - Secondary: #4c5e27 (verde oscuro)
+ */
+
+/* ========================================
+   ESTRUCTURA ESTÁNDAR DE MÓDULOS
+   ======================================== */
+
+/* Wrapper principal del módulo */
+.phsbot-module-wrap {
+    max-width: 1400px;
+    margin: 20px 0;
+}
+
+/* Header del módulo (H1) */
+.phsbot-module-header {
+    background: linear-gradient(135deg, #667a3a 0%, #4c5e27 100%);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 8px;
+    margin: 0 0 24px 0;
+}
+
+/* Cuando el header es un contenedor con H1 y botones */
+.phsbot-module-header h1 {
+    color: white;
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+/* Flexbox para header con botones */
+.phsbot-module-header.flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Botones dentro del header */
+.phsbot-module-header .button {
+    background: white;
+    color: #4c5e27;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.phsbot-module-header .button:hover {
+    background: #f0f0f0;
+    transform: translateY(-1px);
+}
+
+.phsbot-module-header .button-primary {
+    background: #000000;
+    color: white;
+    border: 1px solid white;
+}
+
+.phsbot-module-header .button-primary:hover {
+    background: #1a1a1a;
+    color: white;
+}
+
+/* Contenedor principal (puede ser grid) */
+.phsbot-module-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+}
+
+/* Con sidebar: 2 columnas */
+.phsbot-module-container.has-sidebar {
+    grid-template-columns: 1fr 320px;
+}
+
+/* Contenido principal */
+.phsbot-module-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 32px;
+}
+
+/* Sidebar */
+.phsbot-module-sidebar {
+    background: #000000;
+    border-radius: 12px;
+    box-shadow: none;
+    padding: 24px;
+    color: white;
+    position: sticky;
+    top: 32px;
+    height: fit-content;
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+}
+
+.phsbot-module-sidebar h3 {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+}
+
+.phsbot-module-sidebar p,
+.phsbot-module-sidebar li {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.phsbot-module-sidebar a {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.phsbot-module-sidebar a:hover {
+    color: #e0e0e0;
+}
+
+.phsbot-module-sidebar ul {
+    padding-left: 20px;
+    margin: 12px 0;
+}
+
+.phsbot-module-sidebar li {
+    margin-bottom: 8px;
+}
+
+.phsbot-module-sidebar strong {
+    font-weight: 600;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .phsbot-module-container.has-sidebar {
+        grid-template-columns: 1fr;
+    }
+
+    .phsbot-module-sidebar {
+        position: static;
+    }
+}
+
+/* ============================================
+   SECCIONES Y CARDS
+   ============================================ */
+
+/* Secciones como cards */
+.phsbot-section {
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: none;
+    border: 1px solid #e5e7eb;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.phsbot-section:last-child {
+    margin-bottom: 0;
+}
+
+/* Título de sección con número */
+.phsbot-section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #667a3a;
+    display: flex;
+    align-items: center;
+}
+
+.phsbot-section-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #667a3a;
+    color: white;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 600;
+    margin-right: 12px;
+}
+
+/* ============================================
+   BOTONES GLOBALES
+   ============================================ */
+
+.phsbot-btn-primary {
+    background: #667a3a !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 12px 24px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+    box-shadow: none !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+}
+
+.phsbot-btn-primary:hover {
+    background: #4c5e27 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(102, 122, 58, 0.3) !important;
+}
+
+.phsbot-btn-secondary {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+}
+
+.phsbot-btn-secondary:hover {
+    background: #e2e8f0 !important;
+}
+
+.phsbot-btn-warning {
+    background: #f59e0b !important;
+    color: white !important;
+}
+
+.phsbot-btn-warning:hover {
+    background: #d97706 !important;
+}
+
+.phsbot-btn-danger {
+    background: #dc2626 !important;
+    color: white !important;
+}
+
+.phsbot-btn-danger:hover {
+    background: #b91c1c !important;
+}
+
+/* ============================================
+   FORMULARIOS
+   ============================================ */
+
+.phsbot-form-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.phsbot-form-table th {
+    text-align: left;
+    padding: 12px 16px;
+    font-weight: 600;
+    color: #374151;
+    background: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.phsbot-form-table td {
+    padding: 16px;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: top;
+}
+
+.phsbot-form-table tr:last-child td {
+    border-bottom: none;
+}
+
+.phsbot-form-label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.phsbot-form-input,
+.phsbot-form-textarea,
+.phsbot-form-select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #1f2937;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.phsbot-form-input:focus,
+.phsbot-form-textarea:focus,
+.phsbot-form-select:focus {
+    outline: none;
+    border-color: #667a3a;
+    box-shadow: 0 0 0 3px rgba(102, 122, 58, 0.1);
+}
+
+.phsbot-form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.phsbot-form-description {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 6px;
+    line-height: 1.5;
+}
+
+.phsbot-form-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.phsbot-form-col {
+    flex: 1;
+}
+
+/* ============================================
+   TABLAS DE DATOS
+   ============================================ */
+
+.phsbot-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.phsbot-data-table thead th {
+    background: #f9fafb;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.phsbot-data-table tbody tr {
+    border-bottom: 1px solid #f3f4f6;
+    transition: background 0.15s;
+}
+
+.phsbot-data-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.phsbot-data-table tbody td {
+    padding: 14px 16px;
+    color: #1f2937;
+}
+
+.phsbot-data-table .text-right {
+    text-align: right;
+}
+
+.phsbot-data-table .text-center {
+    text-align: center;
+}
+
+/* ============================================
+   ESTADOS: BADGES Y PILLS
+   ============================================ */
+
+.phsbot-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.phsbot-badge-success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.phsbot-badge-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.phsbot-badge-error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.phsbot-badge-info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.phsbot-badge-default {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+/* ============================================
+   ALERTAS Y NOTIFICACIONES
+   ============================================ */
+
+.phsbot-alert {
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    border-left: 4px solid;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.phsbot-alert-success {
+    background: #f0fdf4;
+    border-color: #22c55e;
+    color: #166534;
+}
+
+.phsbot-alert-warning {
+    background: #fffbeb;
+    border-color: #f59e0b;
+    color: #92400e;
+}
+
+.phsbot-alert-error {
+    background: #fef2f2;
+    border-color: #ef4444;
+    color: #991b1b;
+}
+
+.phsbot-alert-info {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    color: #1e40af;
+}
+
+.phsbot-alert-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.phsbot-alert-content {
+    flex: 1;
+}
+
+.phsbot-alert-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.phsbot-alert-message {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* ============================================
+   LOADING Y ESTADOS VACÍOS
+   ============================================ */
+
+.phsbot-loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.phsbot-loading::before {
+    content: "⏳ ";
+    font-size: 20px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.phsbot-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.phsbot-empty-state-icon {
+    font-size: 48px;
+    color: #d1d5db;
+    margin-bottom: 16px;
+}
+
+.phsbot-empty-state-text {
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+.phsbot-error {
+    text-align: center;
+    padding: 40px 20px;
+    color: #dc2626;
+    font-size: 14px;
+    background: #fef2f2;
+    border: 1px solid #fee2e2;
+    border-radius: 8px;
+}
+
+/* ============================================
+   TABS Y NAVEGACIÓN
+   ============================================ */
+
+.phsbot-tabs {
+    display: flex;
+    border-bottom: 2px solid #e5e7eb;
+    margin-bottom: 24px;
+    gap: 8px;
+}
+
+.phsbot-tab {
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #6b7280;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.phsbot-tab:hover {
+    color: #374151;
+    background: #f9fafb;
+}
+
+.phsbot-tab.active {
+    color: #667a3a;
+    border-bottom-color: #667a3a;
+}
+
+.phsbot-tab-content {
+    display: none;
+}
+
+.phsbot-tab-content.active {
+    display: block;
+}
+
+/* ============================================
+   CARDS Y PANELES
+   ============================================ */
+
+.phsbot-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.phsbot-card-header {
+    padding: 16px 20px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.phsbot-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.phsbot-card-body {
+    padding: 20px;
+}
+
+.phsbot-card-footer {
+    padding: 16px 20px;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Card con gradiente (para plan, estadísticas, etc.) */
+.phsbot-card-gradient {
+    background: linear-gradient(135deg, #667a3a 0%, #4c5e27 100%);
+    color: white;
+    border: none;
+}
+
+.phsbot-card-gradient .phsbot-card-title {
+    color: white;
+}
+
+/* ============================================
+   LISTAS Y MENÚS
+   ============================================ */
+
+.phsbot-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.phsbot-list-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.15s;
+}
+
+.phsbot-list-item:hover {
+    background: #f9fafb;
+}
+
+.phsbot-list-item:last-child {
+    border-bottom: none;
+}
+
+.phsbot-list-item-title {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.phsbot-list-item-meta {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* ============================================
+   UTILIDADES
+   ============================================ */
+
+.phsbot-text-center { text-align: center; }
+.phsbot-text-right { text-align: right; }
+.phsbot-text-left { text-align: left; }
+
+.phsbot-text-sm { font-size: 13px; }
+.phsbot-text-base { font-size: 14px; }
+.phsbot-text-lg { font-size: 16px; }
+.phsbot-text-xl { font-size: 18px; }
+
+.phsbot-text-muted { color: #6b7280; }
+.phsbot-text-bold { font-weight: 600; }
+
+.phsbot-mt-0 { margin-top: 0; }
+.phsbot-mt-1 { margin-top: 8px; }
+.phsbot-mt-2 { margin-top: 16px; }
+.phsbot-mt-3 { margin-top: 24px; }
+.phsbot-mt-4 { margin-top: 32px; }
+
+.phsbot-mb-0 { margin-bottom: 0; }
+.phsbot-mb-1 { margin-bottom: 8px; }
+.phsbot-mb-2 { margin-bottom: 16px; }
+.phsbot-mb-3 { margin-bottom: 24px; }
+.phsbot-mb-4 { margin-bottom: 32px; }
+
+.phsbot-flex { display: flex; }
+.phsbot-flex-col { flex-direction: column; }
+.phsbot-flex-wrap { flex-wrap: wrap; }
+.phsbot-items-center { align-items: center; }
+.phsbot-justify-between { justify-content: space-between; }
+.phsbot-justify-center { justify-content: center; }
+.phsbot-gap-1 { gap: 8px; }
+.phsbot-gap-2 { gap: 16px; }
+.phsbot-gap-3 { gap: 24px; }
+
+.phsbot-hidden { display: none; }
+.phsbot-block { display: block; }
+.phsbot-inline-block { display: inline-block; }
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .phsbot-module-content {
+        padding: 20px;
+    }
+
+    .phsbot-section {
+        padding: 16px;
+    }
+
+    .phsbot-module-header {
+        padding: 12px 16px;
+    }
+
+    .phsbot-module-header h1 {
+        font-size: 20px;
+    }
+
+    .phsbot-form-row {
+        flex-direction: column;
+    }
+}

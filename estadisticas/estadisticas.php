@@ -27,6 +27,14 @@ function phsbot_stats_scripts($hook) {
 
     $version = defined('PHSBOT_VERSION') ? PHSBOT_VERSION : '1.4';
 
+    // CSS unificado (cargar primero)
+    wp_enqueue_style(
+        'phsbot-modules-unified',
+        plugin_dir_url(dirname(__FILE__)) . 'core/assets/modules-unified.css',
+        [],
+        $version
+    );
+
     // Chart.js para gráficas
     wp_enqueue_script(
         'chartjs',
