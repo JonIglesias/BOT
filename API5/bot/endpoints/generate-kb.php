@@ -67,14 +67,13 @@ class BotGenerateKBEndpoint {
             Response::error($result['error'] ?? 'KB generation failed', 500);
         }
 
-        // Trackear uso de tokens
-        $tokenManager->trackUsage(
+        // Trackear uso de tokens con tipo específico
+        $tokenManager->trackUsageByType(
             $license['id'],
+            'bot_kb',
             $result['usage']['prompt_tokens'] ?? 0,
             $result['usage']['completion_tokens'] ?? 0,
-            $model,
-            null,
-            ['operation' => 'generate_kb']
+            $model
         );
 
         Response::success([

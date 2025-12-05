@@ -62,14 +62,13 @@ class BotTranslateWelcomeEndpoint {
             Response::error($result['error'] ?? 'Translation failed', 500);
         }
 
-        // Trackear uso de tokens
-        $tokenManager->trackUsage(
+        // Trackear uso de tokens con tipo específico
+        $tokenManager->trackUsageByType(
             $license['id'],
+            'bot_translate',
             $result['usage']['prompt_tokens'] ?? 0,
             $result['usage']['completion_tokens'] ?? 0,
-            'gpt-4o-mini',
-            null,
-            ['operation' => 'translate_welcome']
+            'gpt-4o-mini'
         );
 
         Response::success([

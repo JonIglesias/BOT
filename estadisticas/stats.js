@@ -345,8 +345,8 @@ jQuery(document).ready(function($) {
     function getOperationTypeName(type) {
         const names = {
             'chat': '💬 Chat de Usuario',
-            'translate_welcome': '🌐 Traducción de Bienvenida',
-            'generate_kb': '📚 Generación de Base de Conocimiento',
+            'translate': '🌐 Traducción de Bienvenida',
+            'kb': '📚 Generación de Base de Conocimiento',
             'list_models': '📋 Listado de Modelos'
         };
 
