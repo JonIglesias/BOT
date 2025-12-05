@@ -32,22 +32,26 @@ class BotTokenManager {
         // 1. Incrementar tokens_used_this_period en api_licenses
         $this->incrementLicenseTokens($licenseId, $tokensTotal);
 
-        // 2. Preparar metadata
-        $trackingMetadata = array_merge($metadata, [
-            'conversation_id' => $conversationId,
-            'endpoint' => BOT_ENDPOINT_NAME
-        ]);
+        // 2. Preparar metadata adicional para logging (no se guarda en BD)
+        if ($conversationId) {
+            Logger::api('info', 'Bot chat tracked', [
+                'license_id' => $licenseId,
+                'conversation_id' => $conversationId,
+                'tokens' => $tokensTotal,
+                'model' => $model
+            ]);
+        }
 
         // 3. Registrar en api_usage_tracking
+        // Solo incluir columnas que existen en la tabla
         $trackingData = [
             'license_id' => $licenseId,
             'operation_type' => BOT_OPERATION_TYPE,
             'tokens_input' => $tokensInput,
             'tokens_output' => $tokensOutput,
             'tokens_total' => $tokensTotal,
-            'model' => $model,
-            'endpoint' => BOT_ENDPOINT_NAME,
-            'metadata' => json_encode($trackingMetadata)
+            'model' => $model
+            // UsageTracking añade automáticamente: created_at, sync_status_at_time, cost_*
         ];
 
         $usageTracking = new UsageTracking();
