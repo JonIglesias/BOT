@@ -497,6 +497,8 @@ JS;
                 'bubble_font_size'   => 15,
 
                 'openai_api_key'     => '',
+                'bot_license_key'    => '',
+                'bot_api_url'        => 'https://bocetosmarketing.com/API5/index.php',
                 'telegram_bot_token' => '',
                 'telegram_chat_id'   => '',
                 'whatsapp_phone'     => '',
