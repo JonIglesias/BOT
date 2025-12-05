@@ -147,6 +147,18 @@ add_action('admin_menu', function () {
         );
     }
 
+    // Submenú: Estadísticas
+    if (function_exists('phsbot_stats_page')) {
+        add_submenu_page(
+            $menu_slug,
+            'PHSBOT · Estadísticas',
+            'Estadísticas',
+            $cap_settings,
+            'phsbot-estadisticas',
+            'phsbot_stats_page'
+        );
+    }
+
     // Limpieza de slugs antiguos
     $legacy = array('phsbot-settings','phsbot_chat','phsbot-chat','phsbot_kb_page','phsbot_leads','phsbot_leads_old');
     foreach ($legacy as $slug) { remove_submenu_page($menu_slug, $slug); }
