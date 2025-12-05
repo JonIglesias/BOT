@@ -57,6 +57,7 @@ $__phsbot_modules = array(
     'chat',
     'kb',
     'leads',
+    'estadisticas',
     'integrations',
     'inject',
     'logs',

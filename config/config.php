@@ -558,6 +558,39 @@ $models     = !empty($api_models) ? $api_models : $fallback;
 
     <!-- Status de validación de licencia (fuera del form para evitar problemas con POST) -->
     <div id="phsbot-license-status" style="margin-top:20px; max-width:800px;"></div>
+
+    <!-- Widget informativo del plan -->
+    <div id="phsbot-plan-widget" style="margin-top:30px; max-width:800px; display:none;">
+      <div style="background: linear-gradient(135deg, #667a3a 0%, #4c5e27 100%); color: #fff; border-radius: 8px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">
+          ℹ️ Información del Plan
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+          <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 6px;">
+            <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">Plan Actual</div>
+            <div style="font-size: 20px; font-weight: 600;" id="widget-plan-name">-</div>
+          </div>
+          <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 6px;">
+            <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">Estado</div>
+            <div style="font-size: 20px; font-weight: 600;" id="widget-plan-status">-</div>
+          </div>
+          <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 6px;">
+            <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">Tokens Disponibles</div>
+            <div style="font-size: 20px; font-weight: 600;">
+              <span id="widget-tokens-available">0</span> / <span id="widget-tokens-limit">0</span>
+            </div>
+            <div style="margin-top: 8px; background: rgba(0,0,0,0.2); height: 6px; border-radius: 3px; overflow: hidden;">
+              <div id="widget-tokens-progress" style="height: 100%; background: #fff; width: 0%; transition: width 0.5s ease;"></div>
+            </div>
+          </div>
+          <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 6px;">
+            <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">Renovación</div>
+            <div style="font-size: 16px; font-weight: 600;" id="widget-renewal-date">-</div>
+            <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;" id="widget-days-remaining">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 <?php
 }
