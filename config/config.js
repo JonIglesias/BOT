@@ -111,4 +111,79 @@
 // Fallback: inicializa cualquier .phsbot-color suelto
 jQuery(function($){
   if ($.fn.wpColorPicker) $('.phsbot-color').wpColorPicker();
+
+  // --- Validar Licencia del Bot ---
+  $('#phsbot-validate-license').on('click', function(e){
+    e.preventDefault();
+    var $btn = $(this);
+    var $status = $('#phsbot-license-status');
+    var licenseKey = $('#bot_license_key').val().trim();
+    var apiUrl = $('#bot_api_url').val().trim();
+
+    if (!licenseKey) {
+      $status.html('<div class="notice notice-error inline"><p>⚠️ Por favor, introduce una clave de licencia.</p></div>');
+      return;
+    }
+
+    if (!apiUrl) {
+      $status.html('<div class="notice notice-error inline"><p>⚠️ Por favor, introduce la URL de la API.</p></div>');
+      return;
+    }
+
+    // Obtener dominio actual desde PHP (lo pasamos como variable global)
+    var domain = window.location.hostname;
+
+    $btn.prop('disabled', true).text('Validando...');
+    $status.html('<div class="notice notice-info inline"><p>🔄 Validando licencia...</p></div>');
+
+    // Construir URL de validación
+    var validateUrl = apiUrl.replace(/\/+$/, '') + '?route=bot/validate&license_key=' + encodeURIComponent(licenseKey) + '&domain=' + encodeURIComponent(domain);
+
+    $.ajax({
+      url: validateUrl,
+      method: 'GET',
+      timeout: 10000,
+      success: function(response){
+        if (response && response.success && response.data && response.data.valid) {
+          var lic = response.data.license;
+          var tokensPercent = lic.tokens_limit > 0 ? Math.round((lic.tokens_used / lic.tokens_limit) * 100) : 0;
+
+          $status.html(
+            '<div class="notice notice-success inline">' +
+            '<p><strong>✅ Licencia válida</strong></p>' +
+            '<ul style="margin:10px 0 0 20px;">' +
+            '<li><strong>Plan:</strong> ' + lic.plan_name + '</li>' +
+            '<li><strong>Estado:</strong> ' + lic.status + '</li>' +
+            '<li><strong>Dominio:</strong> ' + (lic.domain || 'Sin asignar') + '</li>' +
+            '<li><strong>Tokens disponibles:</strong> ' + lic.tokens_available.toLocaleString() + ' / ' + lic.tokens_limit.toLocaleString() + ' (' + tokensPercent + '% usado)</li>' +
+            '<li><strong>Expira:</strong> ' + lic.expires_at + '</li>' +
+            '</ul>' +
+            '</div>'
+          );
+        } else {
+          var reason = (response && response.data && response.data.reason) ? response.data.reason : 'Licencia no válida';
+          $status.html('<div class="notice notice-error inline"><p>❌ ' + reason + '</p></div>');
+        }
+      },
+      error: function(xhr, status, error){
+        var errorMsg = 'Error de conexión con la API';
+
+        try {
+          var response = JSON.parse(xhr.responseText);
+          if (response && response.error && response.error.message) {
+            errorMsg = response.error.message;
+          } else if (response && response.message) {
+            errorMsg = response.message;
+          }
+        } catch(e) {
+          errorMsg += ' (código ' + xhr.status + ')';
+        }
+
+        $status.html('<div class="notice notice-error inline"><p>❌ ' + errorMsg + '</p></div>');
+      },
+      complete: function(){
+        $btn.prop('disabled', false).text('Validar Licencia');
+      }
+    });
+  });
 });

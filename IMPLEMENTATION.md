@@ -201,9 +201,9 @@ mysql -u bocetosm_APAPI -p bocetosm_api_claude4 < API5/bot/install-bot-plans.sql
 
    *Reemplaza {PRODUCT_ID} con los IDs reales de WooCommerce*
 
-### Paso 3: Modificar chat-core.php (PENDIENTE)
+### Paso 3: Modificar chat-core.php ✅ COMPLETADO
 
-Este es el paso más crítico que quedó pendiente. Necesitas modificar la función `phsbot_ajax_chat` en `chat/chat-core.php` para que:
+La función `phsbot_ajax_chat` en `chat/chat-core.php` ha sido completamente modificada para:
 
 1. **Obtenga la license key y API URL:**
 ```php
@@ -290,13 +290,20 @@ curl -X POST "https://bocetosmarketing.com/API5/index.php?route=bot/chat" \
 
 Debería retornar la respuesta de la IA y el consumo de tokens.
 
-### Paso 5: Configurar el Plugin en WordPress
+### Paso 5: Configurar el Plugin en WordPress ✅ COMPLETADO
 
 1. **Ir a PHSBOT → Configuración → Conexiones**
 2. **Introducir:**
    - Bot License Key: `BOT-xxx` (tu licencia de prueba)
    - Bot API URL: `https://bocetosmarketing.com/API5/index.php`
-3. **Guardar configuración**
+3. **Hacer clic en "Validar Licencia"** para verificar que la licencia es válida
+4. **Guardar configuración**
+
+**Nuevo en esta versión:**
+- ✅ Campo "Token OpenAI" eliminado (ya no es necesario)
+- ✅ Botón "Validar Licencia" con validación en tiempo real
+- ✅ Muestra información de la licencia: plan, tokens disponibles, fecha de expiración
+- ✅ Mensajes de error claros si la licencia no es válida
 
 ### Paso 6: Probar en Frontend
 
@@ -375,6 +382,68 @@ LIMIT 10;
 - Botón de compra directa desde el plugin
 - Múltiples dominios por licencia (upgrade)
 - Histórico de conversaciones (analytics)
+
+## 📝 Changelog - Versión Final
+
+### ✅ Cambios Críticos Completados (2025-01-04)
+
+#### `chat/chat-core.php`
+- ✅ **Eliminada dependencia de OpenAI API key directa**
+- ✅ **Requiere ahora bot_license_key obligatoria**
+- ✅ **Llama a API5 en lugar de OpenAI directamente**
+- ✅ **Validación de licencia antes de procesar cada mensaje**
+- ✅ **Auto-detección del dominio desde home_url()**
+- ✅ **Manejo de errores mejorado con mensajes en español**
+- ✅ **Mapeo de códigos de error de API a mensajes user-friendly**
+
+**Códigos de error soportados:**
+- `TOKEN_LIMIT_EXCEEDED` → "Has alcanzado el límite de tokens..."
+- `DOMAIN_MISMATCH` → "Esta licencia está registrada para otro dominio..."
+- `LICENSE_EXPIRED` → "Tu licencia ha expirado..."
+- `LICENSE_NOT_FOUND` → "Licencia no válida..."
+
+#### `config/config.php`
+- ✅ **Eliminado campo "Token OpenAI" del panel** (ya no es necesario)
+- ✅ **Añadidos IDs a campos bot_license_key y bot_api_url**
+- ✅ **Añadido botón "Validar Licencia"**
+- ✅ **Añadido div #phsbot-license-status para mostrar resultados**
+
+#### `config/config.js`
+- ✅ **Añadido handler AJAX para validación de licencia**
+- ✅ **Validación en tiempo real al hacer clic**
+- ✅ **Muestra información completa de la licencia:**
+  - Plan contratado
+  - Estado (active/suspended/expired)
+  - Dominio asignado
+  - Tokens disponibles / límite
+  - Porcentaje de uso
+  - Fecha de expiración
+- ✅ **Manejo de errores con mensajes claros**
+- ✅ **Estados visuales: loading, success, error**
+
+### 🎯 Flujo de Funcionamiento Actual
+
+1. **Usuario abre el chatbot** → Frontend carga
+2. **Usuario envía mensaje** → AJAX a `phsbot_ajax_chat`
+3. **Plugin valida licencia** → Comprueba que existe `bot_license_key`
+4. **Plugin construye payload** → Incluye licencia, dominio, mensaje, contexto
+5. **Plugin llama a API5** → `POST /api/bot/v1/chat`
+6. **API5 valida licencia** → BotLicenseValidator
+7. **API5 valida dominio** → Auto-captura en primera petición
+8. **API5 verifica tokens** → Comprueba límite vs usado
+9. **API5 llama a OpenAI** → BotOpenAIProxy
+10. **API5 registra consumo** → BotTokenManager
+11. **API5 retorna respuesta** → Con tokens consumidos
+12. **Plugin muestra respuesta** → O error si falla
+
+### 🔒 Seguridad Implementada
+
+- ✅ **No se puede usar el chatbot sin licencia válida**
+- ✅ **No se puede usar el chatbot sin dominio autorizado**
+- ✅ **No se puede usar el chatbot si se agotaron los tokens**
+- ✅ **No se puede usar el chatbot si la licencia expiró**
+- ✅ **Cada petición valida la licencia en tiempo real**
+- ✅ **Tracking completo de consumo por licencia**
 
 ## 📞 Soporte
 

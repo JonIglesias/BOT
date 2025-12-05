@@ -204,8 +204,18 @@ function phsbot_ajax_chat(){
   }
 
   $chat = phsbot_chat_get_settings();
-  $api_key = (string) phsbot_setting('openai_api_key', '');
-  if (!$api_key) wp_send_json(array('ok'=>false,'error'=>'Falta API key'));
+
+  // Obtener configuración de la API5
+  $bot_license = (string) phsbot_setting('bot_license_key', '');
+  $bot_api_url = (string) phsbot_setting('bot_api_url', 'https://bocetosmarketing.com/API5/index.php');
+
+  // Validar que exista la licencia
+  if (!$bot_license) {
+    wp_send_json(array('ok'=>false,'error'=>'Falta la clave de licencia del chatbot. Por favor, configúrala en PHSBOT → Configuración → Conexiones.'));
+  }
+
+  // Obtener dominio actual
+  $domain = parse_url(home_url(), PHP_URL_HOST);
 
   $q     = sanitize_text_field($_POST['q'] ?? '');
   $cid   = sanitize_text_field($_POST['cid'] ?? '');
@@ -239,6 +249,7 @@ function phsbot_ajax_chat(){
   $kb = (string) get_option(PHSBOT_KB_DOC_OPT, '');
   if ($kb !== '') $kb = wp_strip_all_tags($kb);
 
+  // Live fetch (si está habilitado)
   $live = '';
   if (!empty($chat['allow_live_fetch']) && !empty($url)){
     $allowed = phsbot_setting('allowed_domains', array());
@@ -248,12 +259,12 @@ function phsbot_ajax_chat(){
     if (!is_array($allowed)) $allowed = array();
     $host = parse_url($url, PHP_URL_HOST);
     if ($host){
-      $domain = strtolower($host);
+      $domain_check = strtolower($host);
       $ok = false;
       foreach ($allowed as $ad){
         $ad = strtolower(trim((string)$ad));
         if (!$ad) continue;
-        if (substr('.'.$domain, -strlen('.'.$ad)) === '.'.$ad || $domain===$ad) { $ok=true; break; }
+        if (substr('.'.$domain_check, -strlen('.'.$ad)) === '.'.$ad || $domain_check===$ad) { $ok=true; break; }
       }
       if ($ok){
         $res = wp_remote_get($url, array('timeout'=>8));
@@ -276,10 +287,7 @@ function phsbot_ajax_chat(){
     $system .= "\nFORMATO DE SALIDA: Devuelve SIEMPRE HTML válido, usando <p>, <ul>, <ol>, <li>, <strong>, <em>, <pre>, <code>, <br>. No uses <script>, <style>, iframes ni backticks. No envuelvas con <html> ni <body>.";
   }
 
-  $messages = array(array('role'=>'system','content'=>$system));
-  if ($kb)   $messages[] = array('role'=>'system','content'=>"KB:\n".$kb);
-  if ($live) $messages[] = array('role'=>'system','content'=>"Contenido de la URL (resumen):\n".$live);
-
+  // Construir contexto de página
   $ctx_lines = array();
   if ($ctx_url)   $ctx_lines[] = '- URL: '.$ctx_url;
   if ($ctx_h1)    $ctx_lines[] = '- H1: '.$ctx_h1;
@@ -291,70 +299,95 @@ function phsbot_ajax_chat(){
   if ($ctx_lang)  $ctx_lines[] = '- HTML lang: '.$ctx_lang;
   if ($ctx_sel)   $ctx_lines[] = '- Selección: '.$ctx_sel;
   if ($ctx_main)  $ctx_lines[] = "- Extracto:\n".$ctx_main;
-  if (!empty($ctx_lines)){
-    $messages[] = array('role'=>'system','content'=>"Contexto actual de página:\n".implode("\n", $ctx_lines));
-  }
 
+  $page_context = !empty($ctx_lines) ? implode("\n", $ctx_lines) : '';
+
+  // Construir historial para API5
+  $history = array();
   foreach ($hist as $h){
     $content = isset($h['content']) ? (string)$h['content'] : ( isset($h['html']) ? wp_strip_all_tags((string)$h['html']) : '' );
-    $messages[] = array('role'=>($h['role']==='assistant'?'assistant':'user'), 'content'=>$content);
+    $history[] = array(
+      'role' => ($h['role']==='assistant' ? 'assistant' : 'user'),
+      'content' => $content
+    );
   }
-  if ($q) $messages[] = array('role'=>'user','content'=>$q);
 
-  $use_responses = phsbot_model_uses_responses_api($model);
-  $endpoint = $use_responses ? 'https://api.openai.com/v1/responses' : 'https://api.openai.com/v1/chat/completions';
-  $payload  = $use_responses
-    ? array(
-        'model'             => $model,
-        'input'             => phsbot_messages_to_responses_input($messages),
-        'temperature'       => $temp,
-        'max_output_tokens' => $max_t,
-        'metadata'          => array('cid'=>$cid, 'source'=>'phsbot'),
-      )
-    : array(
-        'model'       => $model,
-        'temperature' => $temp,
-        'max_tokens'  => $max_t,
-        'messages'    => $messages,
-      );
+  // Construir KB content completo
+  $kb_full = '';
+  if ($kb) $kb_full .= $kb;
+  if ($live) $kb_full .= "\n\nContenido de la URL:\n".$live;
 
-  $res = wp_remote_post($endpoint, array(
-    'timeout' => 30,
-    'headers' => array(
-      'Authorization' => 'Bearer '.$api_key,
-      'Content-Type'  => 'application/json',
+  // Payload para la API5
+  $api_payload = array(
+    'license_key' => $bot_license,
+    'domain' => $domain,
+    'message' => $q,
+    'conversation_id' => $cid,
+    'context' => array(
+      'kb_content' => $kb_full,
+      'history' => $history,
+      'page_url' => $ctx_url,
+      'page_title' => $ctx_title
     ),
-    'body' => wp_json_encode($payload),
+    'settings' => array(
+      'model' => $model,
+      'temperature' => $temp,
+      'max_tokens' => $max_t,
+      'system_prompt' => $system
+    )
+  );
+
+  // Llamar a la API5
+  $api_endpoint = trailingslashit($bot_api_url) . '?route=bot/chat';
+
+  $res = wp_remote_post($api_endpoint, array(
+    'timeout' => 30,
+    'headers' => array('Content-Type' => 'application/json'),
+    'body' => wp_json_encode($api_payload),
   ));
-  if (is_wp_error($res)) wp_send_json(array('ok'=>false,'error'=>$res->get_error_message()));
+
+  if (is_wp_error($res)) {
+    wp_send_json(array('ok'=>false,'error'=>'Error de conexión con la API: ' . $res->get_error_message()));
+  }
 
   $code = wp_remote_retrieve_response_code($res);
-  if ($code !== 200 && defined('WP_DEBUG') && WP_DEBUG) {
-    error_log('PHSBOT endpoint='.$endpoint.' model='.$model.' code='.$code);
-    error_log('PHSBOT body='.substr(wp_remote_retrieve_body($res),0,400));
-  }
   $body = json_decode(wp_remote_retrieve_body($res), true);
-  if ($code !== 200 || !is_array($body)) wp_send_json(array('ok'=>false,'error'=>'Error '.$code));
 
-  $txt = '';
-  if ($use_responses){
-    if (isset($body['output_text']) && is_string($body['output_text'])) {
-      $txt = trim($body['output_text']);
-    } elseif (!empty($body['output']) && is_array($body['output'])) {
-      $buf = '';
-      foreach ($body['output'] as $item){
-        if (!empty($item['content']) && is_array($item['content'])){
-          foreach ($item['content'] as $c){
-            if (isset($c['text'])) $buf .= (string)$c['text'];
-          }
-        }
-      }
-      $txt = trim($buf);
-    } else {
-      $txt = '';
+  // Log para debug
+  if ($code !== 200 && defined('WP_DEBUG') && WP_DEBUG) {
+    error_log('PHSBOT API5 endpoint='.$api_endpoint.' code='.$code);
+    error_log('PHSBOT API5 response='.substr(wp_remote_retrieve_body($res),0,400));
+  }
+
+  // Manejar errores de la API
+  if (!is_array($body) || !isset($body['success'])) {
+    wp_send_json(array('ok'=>false,'error'=>'Respuesta inválida de la API (código '.$code.')'));
+  }
+
+  if (!$body['success']) {
+    $error_code = $body['error']['code'] ?? 'UNKNOWN';
+    $error_msg = $body['error']['message'] ?? 'Error desconocido de la API';
+
+    // Mensajes de error personalizados según el código
+    $user_msg = $error_msg;
+    if ($error_code === 'TOKEN_LIMIT_EXCEEDED') {
+      $user_msg = 'Has alcanzado el límite de tokens de tu plan. Por favor, actualiza tu suscripción o espera al próximo período de facturación.';
+    } elseif ($error_code === 'DOMAIN_MISMATCH') {
+      $user_msg = 'Esta licencia está registrada para otro dominio. Contacta con soporte para cambiar el dominio.';
+    } elseif ($error_code === 'LICENSE_EXPIRED') {
+      $user_msg = 'Tu licencia ha expirado. Por favor, renueva tu suscripción.';
+    } elseif ($error_code === 'LICENSE_NOT_FOUND') {
+      $user_msg = 'Licencia no válida. Verifica la clave de licencia en la configuración.';
     }
-  } else {
-    $txt = trim((string)($body['choices'][0]['message']['content'] ?? ''));
+
+    wp_send_json(array('ok'=>false,'error'=>$user_msg,'code'=>$error_code));
+  }
+
+  // Extraer respuesta
+  $txt = trim((string)($body['data']['response'] ?? ''));
+
+  if (empty($txt)) {
+    wp_send_json(array('ok'=>false,'error'=>'La API no devolvió respuesta'));
   }
 
   $allow_html = !empty($chat['allow_html']) || !empty(phsbot_chat_opt(array('allow_html')));
