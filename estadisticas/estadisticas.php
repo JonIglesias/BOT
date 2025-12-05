@@ -25,6 +25,8 @@ function phsbot_stats_scripts($hook) {
         return;
     }
 
+    $version = defined('PHSBOT_VERSION') ? PHSBOT_VERSION : '1.4';
+
     // Chart.js para gráficas
     wp_enqueue_script(
         'chartjs',
@@ -39,7 +41,7 @@ function phsbot_stats_scripts($hook) {
         'phsbot-stats-js',
         plugin_dir_url(__FILE__) . 'stats.js',
         ['jquery', 'chartjs'],
-        PHSBOT_VERSION . '-' . time(),
+        $version . '-' . time(),
         true
     );
 
@@ -53,6 +55,6 @@ function phsbot_stats_scripts($hook) {
         'phsbot-stats-css',
         plugin_dir_url(__FILE__) . 'stats.css',
         [],
-        PHSBOT_VERSION
+        $version
     );
 }
