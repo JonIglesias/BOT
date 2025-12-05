@@ -156,7 +156,7 @@ Obtiene estadísticas de uso (últimos N días)
 Se añadieron dos nuevos campos en la pestaña "Conexiones":
 
 1. **Bot License Key** - Para introducir la licencia BOT-xxx
-2. **Bot API URL** - URL de la API (default: https://bocetosmarketing.com/API5/index.php)
+2. **Bot API URL** - URL de la API (default: https://bocetosmarketing.com/api_claude_5/index.php)
 
 El campo "Token OpenAI" ahora es opcional y se mantiene por compatibilidad.
 
@@ -208,7 +208,7 @@ La función `phsbot_ajax_chat` en `chat/chat-core.php` ha sido completamente mod
 1. **Obtenga la license key y API URL:**
 ```php
 $bot_license = phsbot_setting('bot_license_key', '');
-$bot_api_url = phsbot_setting('bot_api_url', 'https://bocetosmarketing.com/API5/index.php');
+$bot_api_url = phsbot_setting('bot_api_url', 'https://bocetosmarketing.com/api_claude_5/index.php');
 $domain = parse_url(home_url(), PHP_URL_HOST);
 ```
 
@@ -270,7 +270,7 @@ $txt = $body['data']['response'];
 #### Test 1: Validar Licencia
 
 ```bash
-curl "https://bocetosmarketing.com/API5/index.php?route=bot/validate&license_key=BOT-xxx&domain=tudominio.com"
+curl "https://bocetosmarketing.com/api_claude_5/index.php?route=bot/validate&license_key=BOT-xxx&domain=tudominio.com"
 ```
 
 Debería retornar un JSON indicando si la licencia es válida.
@@ -278,7 +278,7 @@ Debería retornar un JSON indicando si la licencia es válida.
 #### Test 2: Enviar Mensaje de Chat
 
 ```bash
-curl -X POST "https://bocetosmarketing.com/API5/index.php?route=bot/chat" \
+curl -X POST "https://bocetosmarketing.com/api_claude_5/index.php?route=bot/chat" \
   -H "Content-Type: application/json" \
   -d '{
     "license_key": "BOT-xxx",
@@ -295,7 +295,7 @@ Debería retornar la respuesta de la IA y el consumo de tokens.
 1. **Ir a PHSBOT → Configuración → Conexiones**
 2. **Introducir:**
    - Bot License Key: `BOT-xxx` (tu licencia de prueba)
-   - Bot API URL: `https://bocetosmarketing.com/API5/index.php`
+   - Bot API URL: `https://bocetosmarketing.com/api_claude_5/index.php`
 3. **Hacer clic en "Validar Licencia"** para verificar que la licencia es válida
 4. **Guardar configuración**
 

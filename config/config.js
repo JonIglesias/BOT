@@ -190,10 +190,4 @@ jQuery(function($){
       }
     });
   });
-
-  // Limpiar el div de status antes de submit del formulario para evitar problemas
-  $('.phsbot-config-form').on('submit', function() {
-    // Vaciar el div de status para reducir el tamaño del DOM antes del submit
-    $('#phsbot-license-status').empty();
-  });
 });
