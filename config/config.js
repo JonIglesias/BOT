@@ -167,6 +167,8 @@ jQuery(function($){
         } else {
           var reason = (response && response.data && response.data.reason) ? response.data.reason : 'Licencia no válida';
           $status.html('<div class="notice notice-error inline"><p>❌ ' + reason + '</p></div>');
+          // Ocultar widget si hay error
+          $('#phsbot-plan-widget').hide();
         }
       },
       error: function(xhr, status, error){
@@ -189,5 +191,68 @@ jQuery(function($){
         $btn.prop('disabled', false).text('Validar Licencia');
       }
     });
+  });
+
+  // Función para cargar y mostrar el widget del plan
+  function loadPlanWidget() {
+    var licenseKey = $('#bot_license_key').val().trim();
+    var apiUrl = $('#bot_api_url').val().trim();
+
+    if (!licenseKey || !apiUrl) {
+      return;
+    }
+
+    var statusUrl = apiUrl.replace(/\/+$/, '') + '?route=bot/status';
+
+    $.ajax({
+      url: statusUrl,
+      method: 'GET',
+      data: {
+        license_key: licenseKey
+      },
+      timeout: 8000,
+      success: function(response){
+        if (response && response.success && response.data && response.data.license) {
+          var lic = response.data.license;
+
+          // Actualizar widget
+          $('#widget-plan-name').text(lic.plan_name || 'Desconocido');
+          $('#widget-plan-status').text(lic.status || '-');
+          $('#widget-tokens-available').text((lic.tokens_remaining || 0).toLocaleString('es-ES'));
+          $('#widget-tokens-limit').text((lic.tokens_limit || 0).toLocaleString('es-ES'));
+
+          var usagePercent = lic.usage_percentage || 0;
+          $('#widget-tokens-progress').css('width', usagePercent + '%');
+
+          if (lic.expires_at) {
+            var expiryDate = new Date(lic.expires_at);
+            $('#widget-renewal-date').text(expiryDate.toLocaleDateString('es-ES'));
+
+            var daysRemaining = lic.days_remaining || 0;
+            $('#widget-days-remaining').text(daysRemaining + ' días restantes');
+          } else {
+            $('#widget-renewal-date').text('No disponible');
+            $('#widget-days-remaining').text('');
+          }
+
+          // Mostrar widget
+          $('#phsbot-plan-widget').fadeIn();
+        }
+      },
+      error: function(){
+        // Silenciosamente ocultar widget si hay error
+        $('#phsbot-plan-widget').hide();
+      }
+    });
+  }
+
+  // Cargar widget al inicio si hay licencia
+  if ($('#bot_license_key').val().trim()) {
+    loadPlanWidget();
+  }
+
+  // Recargar widget cuando cambia la licencia o API URL
+  $('#bot_license_key, #bot_api_url').on('change', function() {
+    loadPlanWidget();
   });
 });
