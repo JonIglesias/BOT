@@ -46,48 +46,47 @@ function phsbot_chat_build_welcome_i18n($text){
   $base  = substr(get_locale(),0,2); if (!$base) $base = 'es';
   $out   = array($base => $text);
 
-  $api_key = (string) phsbot_setting('openai_api_key', '');
-  if (!$api_key) return $out;
+  // Obtener licencia y API URL (ya NO usamos openai_api_key del cliente)
+  $bot_license = (string) phsbot_setting('bot_license_key', '');
+  $bot_api_url = (string) phsbot_setting('bot_api_url', 'https://bocetosmarketing.com/api_claude_5/index.php');
 
-  $prompt = "Traduce el saludo entre <<< y >>> a estos idiomas: ".implode(',', $langs).".\n".
-            "Devuelve SOLO un objeto JSON {\"es\":\"...\",\"en\":\"...\"} sin texto extra.\n".
-            "<<<".$text.">>>";
+  if (!$bot_license) return $out;
 
-  $body = array(
-    'model' => 'gpt-4o-mini',
-    'temperature' => 0.2,
-    'messages' => array(
-      array('role'=>'system','content'=>'Eres un traductor profesional. Devuelves exclusivamente JSON válido.'),
-      array('role'=>'user','content'=>$prompt),
-    ),
-    'max_tokens' => 300,
+  $domain = parse_url(home_url(), PHP_URL_HOST);
+
+  // Llamar a API5 para traducir (la API usa su propia API key de OpenAI internamente)
+  $api_endpoint = trailingslashit($bot_api_url) . '?route=bot/translate-welcome';
+
+  $payload = array(
+    'license_key' => $bot_license,
+    'domain' => $domain,
+    'text' => $text,
+    'languages' => $langs
   );
 
-  $res = wp_remote_post('https://api.openai.com/v1/chat/completions', array(
-    'timeout' => 25,
-    'headers' => array(
-      'Authorization' => 'Bearer '.$api_key,
-      'Content-Type'  => 'application/json',
-    ),
-    'body' => wp_json_encode($body),
+  $res = wp_remote_post($api_endpoint, array(
+    'timeout' => 30,
+    'headers' => array('Content-Type' => 'application/json'),
+    'body' => wp_json_encode($payload),
   ));
+
   if (is_wp_error($res)) return $out;
   $code = wp_remote_retrieve_response_code($res);
   if ($code !== 200) return $out;
 
-  $json = json_decode(wp_remote_retrieve_body($res), true);
-  $txt  = (string)($json['choices'][0]['message']['content'] ?? '');
-  $txt  = trim($txt);
-  $start = strpos($txt,'{'); $end = strrpos($txt,'}');
-  if ($start!==false && $end!==false) $txt = substr($txt,$start,$end-$start+1);
-  $map = json_decode($txt, true);
-  if (!is_array($map)) return $out;
+  $body = json_decode(wp_remote_retrieve_body($res), true);
+  if (!$body || !isset($body['success']) || !$body['success']) return $out;
 
-  foreach ($map as $k=>$v){
+  $translations = $body['data']['translations'] ?? array();
+  if (!is_array($translations)) return $out;
+
+  // Merge translations
+  foreach ($translations as $k=>$v){
     $k2  = strtolower(substr((string)$k,0,2));
     $val = trim(wp_strip_all_tags((string)$v));
     if ($k2 && $val!=='') $out[$k2] = $val;
   }
+
   return $out;
 }
 }
