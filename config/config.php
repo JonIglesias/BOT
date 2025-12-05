@@ -553,20 +553,16 @@ $models     = !empty($api_models) ? $api_models : $fallback;
           <tbody>
             <tr><th scope="row">Bot License Key</th>
               <td>
-                <input type="text" name="bot_license_key" class="regular-text" placeholder="BOT-XXXX-XX-XXXX-XXXXXXXX" value="<?php echo esc_attr($bot_license_key);?>">
+                <input type="text" name="bot_license_key" id="bot_license_key" class="regular-text" placeholder="BOT-XXXX-XX-XXXX-XXXXXXXX" value="<?php echo esc_attr($bot_license_key);?>">
+                <button type="button" class="button" id="phsbot-validate-license">Validar Licencia</button>
+                <div id="phsbot-license-status" style="margin-top:10px;"></div>
                 <p class="description">Introduce tu clave de licencia del chatbot (formato: BOT-XXXX-XX-XXXX-XXXXXXXX).</p>
               </td>
             </tr>
             <tr><th scope="row">Bot API URL</th>
               <td>
-                <input type="text" name="bot_api_url" class="regular-text" value="<?php echo esc_attr($bot_api_url);?>">
+                <input type="text" name="bot_api_url" id="bot_api_url" class="regular-text" value="<?php echo esc_attr($bot_api_url);?>">
                 <p class="description">URL de la API del chatbot (por defecto: https://bocetosmarketing.com/API5/index.php).</p>
-              </td>
-            </tr>
-            <tr><th scope="row">Token OpenAI (ChatGPT) <em style="color:#999;">[Opcional]</em></th>
-              <td>
-                <input type="text" name="openai_api_key" class="regular-text" value="<?php echo esc_attr($openai_api_key);?>">
-                <p class="description">Ya no es necesario si usas la license key del bot. Se mantiene por compatibilidad.</p>
               </td>
             </tr>
             <tr><th scope="row">Token de Telegram</th>
