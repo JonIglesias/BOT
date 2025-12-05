@@ -19,7 +19,7 @@ $user = Auth::user();
 $module = $_GET['module'] ?? 'dashboard';
 
 // Módulos válidos
-$validModules = ['dashboard', 'licenses', 'sync', 'webhooks', 'plans', 'settings'];
+$validModules = ['dashboard', 'licenses', 'sync', 'webhooks', 'plans', 'settings', 'bot-config'];
 if (!in_array($module, $validModules)) {
     $module = 'dashboard';
 }
@@ -177,6 +177,9 @@ if ($module !== 'dashboard') {
                         <a href="?module=plans" class="menu-item <?= $module === 'plans' ? 'active' : '' ?>">
                             <span class="icon">📦</span> Planes
                         </a>
+                        <a href="?module=bot-config" class="menu-item <?= $module === 'bot-config' ? 'active' : '' ?>">
+                            <span class="icon">🤖</span> Config. Chatbot
+                        </a>
                         <a href="?module=settings" class="menu-item <?= $module === 'settings' ? 'active' : '' ?>">
                             <span class="icon">⚙️</span> Configuración
                         </a>
@@ -191,6 +194,7 @@ if ($module !== 'dashboard') {
                             'sync' => 'Monitor de Sincronización',
                             'webhooks' => 'Monitor de Webhooks',
                             'plans' => 'Gestión de Planes',
+                            'bot-config' => 'Configuración del Chatbot',
                             'settings' => 'Configuración'
                         ];
                         echo $titles[$module] ?? ucfirst($module);
