@@ -104,7 +104,7 @@ try {
     }
     
     // Leer todos los settings de BD
-    $stmt = $db->prepare("SELECT setting_key, setting_value FROM " . DB_PREFIX . "settings WHERE setting_key IN (
+    $stmt = $db->prepare("SELECT setting_key, setting_value, setting_type FROM " . DB_PREFIX . "settings WHERE setting_key IN (
         'openai_api_key',
         'geowrite_ai_model', 'geowrite_ai_temperature', 'geowrite_ai_max_tokens', 'geowrite_ai_tone',
         'bot_ai_model', 'bot_ai_temperature', 'bot_ai_max_tokens', 'bot_ai_tone', 'bot_ai_max_history'
@@ -118,30 +118,43 @@ try {
         $settings[$row['setting_key']] = $row['setting_value'];
     }
 
+    // Debug: Mostrar settings leídos (comentar después de verificar)
+    if (isset($_GET['debug']) && $_GET['debug'] == '1') {
+        echo "<div class='alert alert-info'>";
+        echo "<h4>DEBUG - Settings leídos de BD:</h4>";
+        echo "<pre>" . print_r($settings, true) . "</pre>";
+        echo "<p><strong>geowrite_ai_model:</strong> " . ($settings['geowrite_ai_model'] ?? 'NO EXISTE') . "</p>";
+        echo "<p><strong>bot_ai_model:</strong> " . ($settings['bot_ai_model'] ?? 'NO EXISTE') . "</p>";
+        echo "</div>";
+    }
+
     // Valores por defecto
     $openaiKey = $settings['openai_api_key'] ?? '';
 
-    // GeoWrite defaults
-    $geowrite_ai_model = $settings['geowrite_ai_model'] ?? 'gpt-4o';
-    $geowrite_ai_temperature = $settings['geowrite_ai_temperature'] ?? '0.7';
-    $geowrite_ai_max_tokens = $settings['geowrite_ai_max_tokens'] ?? '2000';
-    $geowrite_ai_tone = $settings['geowrite_ai_tone'] ?? 'profesional';
+    // GeoWrite defaults (asegurar que sean strings para comparación en HTML)
+    $geowrite_ai_model = isset($settings['geowrite_ai_model']) ? (string)$settings['geowrite_ai_model'] : 'gpt-4o';
+    $geowrite_ai_temperature = isset($settings['geowrite_ai_temperature']) ? $settings['geowrite_ai_temperature'] : '0.7';
+    $geowrite_ai_max_tokens = isset($settings['geowrite_ai_max_tokens']) ? $settings['geowrite_ai_max_tokens'] : '2000';
+    $geowrite_ai_tone = isset($settings['geowrite_ai_tone']) ? $settings['geowrite_ai_tone'] : 'profesional';
 
-    // BOT defaults
-    $bot_ai_model = $settings['bot_ai_model'] ?? 'gpt-4o';
-    $bot_ai_temperature = $settings['bot_ai_temperature'] ?? '0.7';
-    $bot_ai_max_tokens = $settings['bot_ai_max_tokens'] ?? '1000';
-    $bot_ai_tone = $settings['bot_ai_tone'] ?? 'profesional';
-    $bot_ai_max_history = $settings['bot_ai_max_history'] ?? '10';
+    // BOT defaults (asegurar que sean strings para comparación en HTML)
+    $bot_ai_model = isset($settings['bot_ai_model']) ? (string)$settings['bot_ai_model'] : 'gpt-4o';
+    $bot_ai_temperature = isset($settings['bot_ai_temperature']) ? $settings['bot_ai_temperature'] : '0.7';
+    $bot_ai_max_tokens = isset($settings['bot_ai_max_tokens']) ? $settings['bot_ai_max_tokens'] : '1000';
+    $bot_ai_tone = isset($settings['bot_ai_tone']) ? $settings['bot_ai_tone'] : 'profesional';
+    $bot_ai_max_history = isset($settings['bot_ai_max_history']) ? $settings['bot_ai_max_history'] : '10';
 
     // Obtener lista de modelos disponibles desde la BD
     $stmt = $db->prepare("SELECT DISTINCT model_name FROM " . DB_PREFIX . "model_prices WHERE is_active = 1 ORDER BY model_name");
     $stmt->execute();
     $availableModels = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    // Si no hay modelos en BD, usar lista por defecto
+    // Si no hay modelos en BD, usar lista por defecto y avisar
     if (empty($availableModels)) {
-        $availableModels = ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-5', 'gpt-5-mini'];
+        $availableModels = ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'];
+        if (!$error) {
+            $error = '⚠️ No hay modelos en la base de datos. <a href="../setup-default-models.php" target="_blank">Ejecuta el script de setup</a> o ve a <a href="?module=models">Modelos OpenAI</a> para agregar modelos.';
+        }
     }
 
 } catch (Exception $e) {
