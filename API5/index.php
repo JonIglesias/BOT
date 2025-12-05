@@ -206,6 +206,27 @@ $router->get('bot/usage', function() {
     $endpoint->handle();
 });
 
+// List models - GET /bot/list-models
+$router->get('bot/list-models', function() {
+    require_once API_BASE_DIR . '/bot/endpoints/list-models.php';
+    $endpoint = new BotListModelsEndpoint();
+    $endpoint->handle();
+});
+
+// Translate welcome - POST /bot/translate-welcome
+$router->post('bot/translate-welcome', function() {
+    require_once API_BASE_DIR . '/bot/endpoints/translate-welcome.php';
+    $endpoint = new BotTranslateWelcomeEndpoint();
+    $endpoint->handle();
+});
+
+// Generate KB - POST /bot/generate-kb
+$router->post('bot/generate-kb', function() {
+    require_once API_BASE_DIR . '/bot/endpoints/generate-kb.php';
+    $endpoint = new BotGenerateKBEndpoint();
+    $endpoint->handle();
+});
+
 // ============================================================================
 // CRON - AUTO SYNC
 // ============================================================================
