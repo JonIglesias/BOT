@@ -6,6 +6,11 @@
 $success = '';
 $error = '';
 
+// Verificar si viene de un redirect exitoso
+if (isset($_GET['success']) && $_GET['success'] == '1') {
+    $success = '✅ Configuración guardada correctamente.';
+}
+
 // Obtener settings actuales de BD
 try {
     $db = Database::getInstance();
@@ -92,6 +97,10 @@ try {
         } else {
             $success = '✅ OpenAI guardado en BD. ⚠️ config.php no es escribible.';
         }
+
+        // Redirect para evitar re-envío del formulario
+        header('Location: ?module=settings&success=1');
+        exit;
     }
     
     // Leer todos los settings de BD
