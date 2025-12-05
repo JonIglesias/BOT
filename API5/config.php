@@ -121,10 +121,10 @@ define('ENABLE_WEBHOOK_LOG', true);
 define('ADMIN_SESSION_TIMEOUT', 7200); // 2 horas
 
 // ============================================================================
-// CONFIGURACIÓN DE OPENAI
+// CONFIGURACIÓN DE OPENAI (LEGACY - ahora se usa la definición de línea 28)
 // ============================================================================
 
-define('OPENAI_API_KEY', ''); // Se configura en admin o directamente aquí
+// OPENAI_API_KEY ya está definido en línea 28 con getenv()
 define('OPENAI_MODEL', 'gpt-4o-mini');
 define('OPENAI_MAX_TOKENS', 4000);
 define('OPENAI_TEMPERATURE', 0.7);
