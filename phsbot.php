@@ -504,7 +504,7 @@ JS;
 
                 'openai_api_key'     => '',
                 'bot_license_key'    => '',
-                'bot_api_url'        => 'https://bocetosmarketing.com/API5/index.php',
+                'bot_api_url'        => 'https://bocetosmarketing.com/api_claude_5/index.php',
                 'telegram_bot_token' => '',
                 'telegram_chat_id'   => '',
                 'whatsapp_phone'     => '',

@@ -207,7 +207,7 @@ function phsbot_ajax_chat(){
 
   // Obtener configuración de la API5
   $bot_license = (string) phsbot_setting('bot_license_key', '');
-  $bot_api_url = (string) phsbot_setting('bot_api_url', 'https://bocetosmarketing.com/API5/index.php');
+  $bot_api_url = (string) phsbot_setting('bot_api_url', 'https://bocetosmarketing.com/api_claude_5/index.php');
 
   // Validar que exista la licencia
   if (!$bot_license) {
