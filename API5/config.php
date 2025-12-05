@@ -20,6 +20,14 @@ define('DB_PREFIX', 'api_');
 define('DB_CHARSET', 'utf8mb4');
 
 // ============================================================================
+// CONFIGURACIÓN DE OPENAI
+// ============================================================================
+
+// OpenAI API Key del servidor (para operaciones administrativas del chatbot)
+// NO EXPONER esta clave a los clientes - solo se usa internamente en la API
+define('OPENAI_API_KEY', getenv('OPENAI_API_KEY') ?: '');
+
+// ============================================================================
 // CONFIGURACIÓN DE WOOCOMMERCE API
 // ============================================================================
 

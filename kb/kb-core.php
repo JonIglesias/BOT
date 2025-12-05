@@ -14,9 +14,13 @@ function phsbot_kb_update_option_noautoload($key, $value) {
     if ( false === get_option($key, false) ) add_option($key, $value, '', 'no');
     else update_option($key, $value, 'no');
 }
-function phsbot_kb_get_openai_key() {
+function phsbot_kb_get_license_info() {
     $settings = get_option('phsbot_settings', []);
-    return isset($settings['openai_api_key']) ? trim($settings['openai_api_key']) : '';
+    return [
+        'license_key' => isset($settings['bot_license_key']) ? trim($settings['bot_license_key']) : '',
+        'api_url'     => isset($settings['bot_api_url']) ? trim($settings['bot_api_url']) : 'https://bocetosmarketing.com/api_claude_5/index.php',
+        'domain'      => parse_url(home_url(), PHP_URL_HOST)
+    ];
 }
 
 /* ====================== Registro de errores visibles ====================== */
@@ -107,26 +111,26 @@ function phsbot_kb_get_models($force_refresh = false) {
 
     if (!$force_refresh && !$stale && !empty($cache['list'])) return $cache['list'];
 
-    $api_key = phsbot_kb_get_openai_key();
-    if ($api_key) {
-        $res = wp_remote_get('https://api.openai.com/v1/models', [
+    $license = phsbot_kb_get_license_info();
+    if ($license['license_key']) {
+        // Llamar a API5 para obtener modelos (la API usa su propia API key de OpenAI)
+        $api_endpoint = trailingslashit($license['api_url']) . '?route=bot/list-models';
+
+        $payload = [
+            'license_key' => $license['license_key'],
+            'domain'      => $license['domain']
+        ];
+
+        $res = wp_remote_post($api_endpoint, [
             'timeout' => 20,
-            'headers' => [
-                'Authorization' => 'Bearer ' . $api_key,
-                'Content-Type'  => 'application/json',
-            ],
+            'headers' => ['Content-Type' => 'application/json'],
+            'body'    => wp_json_encode($payload),
         ]);
+
         if (!is_wp_error($res) && wp_remote_retrieve_response_code($res) === 200) {
             $body = json_decode(wp_remote_retrieve_body($res), true);
-            $list = [];
-            if (isset($body['data']) && is_array($body['data'])) {
-                foreach ($body['data'] as $m) if (!empty($m['id'])) $list[] = $m['id'];
-                usort($list, function($a,$b){
-                    $rank = ['gpt-5','gpt-4.1','gpt-4o','gpt-4o-mini','gpt-4','gpt-3.5'];
-                    $wa=$wb=100; foreach ($rank as $i=>$n){ if(stripos($a,$n)!==false)$wa=$i; if(stripos($b,$n)!==false)$wb=$i; }
-                    return $wa===$wb ? strnatcasecmp($a,$b) : $wa-$wb;
-                });
-                $list = array_values(array_unique($list));
+            if (isset($body['success']) && $body['success'] && !empty($body['data']['models'])) {
+                $list = $body['data']['models'];
                 phsbot_kb_update_option_noautoload('phsbot_kb_models_cache', ['ts'=>$now,'list'=>$list]);
                 return $list;
             }
@@ -204,23 +208,31 @@ function phsbot_kb_http_get($url, $timeout = 10) {
 
 /* ====================== OpenAI ====================== */
 function phsbot_kb_openai_chat($api_key, $model, $user_prompt, $max_tokens = 8000, $temperature = 0.2) {
-    $endpoint = 'https://api.openai.com/v1/chat/completions';
+    // Obtener info de licencia (ya no usamos $api_key directamente)
+    $license = phsbot_kb_get_license_info();
+
+    if (!$license['license_key']) {
+        return new WP_Error('no_license', 'No se encontró una licencia BOT válida.');
+    }
+
+    // Llamar a API5 para generar contenido (la API usa su propia API key de OpenAI)
+    $api_endpoint = trailingslashit($license['api_url']) . '?route=bot/generate-kb';
+
+    $system_prompt = 'Eres un analista de contenidos web senior y redactas en español en HTML semántico válido, sin Markdown ni fences.';
+
     $payload = [
-        'model'       => $model,
-        'temperature' => $temperature,
-        'max_tokens'  => $max_tokens,
-        'messages'    => [
-            ['role' => 'system', 'content' => 'Eres un analista de contenidos web senior y redactas en español en HTML semántico válido, sin Markdown ni fences.'],
-            ['role' => 'user',   'content' => $user_prompt],
-        ],
+        'license_key'   => $license['license_key'],
+        'domain'        => $license['domain'],
+        'model'         => $model,
+        'system_prompt' => $system_prompt,
+        'user_prompt'   => $user_prompt,
+        'max_tokens'    => $max_tokens,
+        'temperature'   => $temperature
     ];
-    $args = [
+
+    return wp_remote_post($api_endpoint, [
         'timeout' => 120,
-        'headers' => [
-            'Authorization' => 'Bearer ' . $api_key,
-            'Content-Type'  => 'application/json',
-        ],
-        'body' => wp_json_encode($payload),
-    ];
-    return wp_remote_post($endpoint, $args);
+        'headers' => ['Content-Type' => 'application/json'],
+        'body'    => wp_json_encode($payload),
+    ]);
 }

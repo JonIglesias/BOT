@@ -77,7 +77,6 @@ function phsbot_config_handle_save(){
 
   $g['bot_license_key']    = isset($_POST['bot_license_key'])    ? (string) wp_unslash($_POST['bot_license_key'])    : ($g['bot_license_key']    ?? '');
   $g['bot_api_url']        = isset($_POST['bot_api_url'])        ? esc_url_raw($_POST['bot_api_url'])                : ($g['bot_api_url']        ?? 'https://bocetosmarketing.com/api_claude_5/index.php');
-  $g['openai_api_key']     = isset($_POST['openai_api_key'])     ? (string) wp_unslash($_POST['openai_api_key'])     : ($g['openai_api_key']     ?? '');
   $g['telegram_bot_token'] = isset($_POST['telegram_bot_token']) ? (string) wp_unslash($_POST['telegram_bot_token']) : ($g['telegram_bot_token'] ?? '');
   $g['telegram_chat_id']   = isset($_POST['telegram_chat_id'])   ? sanitize_text_field($_POST['telegram_chat_id'])   : ($g['telegram_chat_id']   ?? '');
   $g['whatsapp_phone']     = isset($_POST['whatsapp_phone'])     ? sanitize_text_field($_POST['whatsapp_phone'])     : ($g['whatsapp_phone']     ?? '');
@@ -121,15 +120,18 @@ function phsbot_config_handle_save(){
 /* ========FIN GUARDADO DE OPCIONES ===== */
 add_action('admin_post_phsbot_config_save', 'phsbot_config_handle_save');
 
-/* ======== OPENAI: OBTENER API KEY ======== */
-/* Devuelve la API key de OpenAI desde los ajustes principales */
-if (!function_exists('phsbot_openai_get_api_key')) {
-    function phsbot_openai_get_api_key() {
+/* ======== BOT: OBTENER LICENCIA ======== */
+/* Devuelve la información de licencia BOT desde los ajustes principales */
+if (!function_exists('phsbot_get_license_info')) {
+    function phsbot_get_license_info() {
         $main = get_option(defined('PHSBOT_MAIN_SETTINGS_OPT') ? PHSBOT_MAIN_SETTINGS_OPT : 'phsbot_settings', array());
-        $key  = isset($main['openai_api_key']) ? (string)$main['openai_api_key'] : '';
-        return trim($key);
+        return [
+            'license_key' => isset($main['bot_license_key']) ? trim($main['bot_license_key']) : '',
+            'api_url'     => isset($main['bot_api_url']) ? trim($main['bot_api_url']) : 'https://bocetosmarketing.com/api_claude_5/index.php',
+            'domain'      => parse_url(home_url(), PHP_URL_HOST)
+        ];
     }
-} /* ========FIN OPENAI: OBTENER API KEY ===== */
+} /* ========FIN BOT: OBTENER LICENCIA ===== */
 
 
 
@@ -144,65 +146,42 @@ if (!function_exists('phsbot_openai_collapse_model_alias')) {
 
 
 
-/* ======== OPENAI: LISTAR MODELOS GPT-4+ / GPT-5* (EN VIVO + CACHE) ======== */
-/* Llama a /v1/models, filtra GPT-4* y GPT-5* óptimos para chat (no embeddings/audio/tts/etc.) y cachea en transient */
+/* ======== OPENAI: LISTAR MODELOS GPT-4+ / GPT-5* (VÍA API5 + CACHE) ======== */
+/* Llama a API5 bot/list-models que filtra GPT-4* y GPT-5* óptimos para chat y cachea en transient */
 if (!function_exists('phsbot_openai_list_chat_models')) {
     function phsbot_openai_list_chat_models($ttl = 12 * HOUR_IN_SECONDS) {
         $cache_key = 'phsbot_openai_models_chat_v3';
         $cached = get_transient($cache_key);
         if (is_array($cached) && !empty($cached)) return $cached;
 
-        $api_key = phsbot_openai_get_api_key();
-        if (!$api_key) return array();
+        $license = phsbot_get_license_info();
+        if (!$license['license_key']) return array();
 
-        $resp = wp_remote_get('https://api.openai.com/v1/models', array(
-            'headers' => array(
-                'Authorization' => 'Bearer ' . $api_key,
-                'Content-Type'  => 'application/json',
-            ),
+        // Llamar a API5 para obtener modelos (la API usa su propia API key de OpenAI)
+        $api_endpoint = trailingslashit($license['api_url']) . '?route=bot/list-models';
+
+        $payload = [
+            'license_key' => $license['license_key'],
+            'domain'      => $license['domain']
+        ];
+
+        $resp = wp_remote_post($api_endpoint, [
             'timeout' => 8,
-        ));
+            'headers' => ['Content-Type' => 'application/json'],
+            'body'    => wp_json_encode($payload),
+        ]);
+
         if (is_wp_error($resp) || wp_remote_retrieve_response_code($resp) !== 200) return array();
 
         $data = json_decode(wp_remote_retrieve_body($resp), true);
-        if (!isset($data['data']) || !is_array($data['data'])) return array();
+        if (!isset($data['success']) || !$data['success'] || !isset($data['data']['models'])) return array();
 
-        $ids = array();
-        foreach ($data['data'] as $item) {
-            if (empty($item['id'])) continue;
-            $id = (string)$item['id'];
-
-            // Incluir solo familias GPT-4* y GPT-5*
-            if (!preg_match('/^gpt-(4|5)/i', $id)) continue;
-
-            // Excluir no-chat u obsoletos
-            if (preg_match('/(embed|embedding|whisper|tts|audio|realtime|vision-only|legacy|deprecated|ft:|fine|batch|vector)/i', $id)) continue;
-
-            // Colapsar snapshots/aliases a su base
-            $alias = phsbot_openai_collapse_model_alias($id);
-            $ids[] = $alias;
-        }
-
-        // Únicos y ordenados por preferencia (5 > 4o > 4.1 > resto; "mini" detrás)
-        $ids = array_values(array_unique($ids));
-        usort($ids, function($a, $b){
-            $rank = function($m){
-                $w = 0;
-                if (preg_match('/^gpt-5/i', $m))    $w += 500;
-                if (preg_match('/^gpt-4o/i', $m))   $w += 410;
-                if (preg_match('/^gpt-4\.1/i', $m)) $w += 405;
-                if (preg_match('/^gpt-4/i', $m))    $w += 400;
-                if (preg_match('/mini/i', $m))      $w -= 5; // mini = barato/rápido
-                return $w;
-            };
-            $ra = $rank($a); $rb = $rank($b);
-            return ($ra === $rb) ? strcmp($a,$b) : (($ra > $rb) ? -1 : 1);
-        });
+        $ids = $data['data']['models'];
 
         set_transient($cache_key, $ids, $ttl);
         return $ids;
     }
-} /* ========FIN OPENAI: LISTAR MODELOS GPT-4+ / GPT-5* (EN VIVO + CACHE) ===== */
+} /* ========FIN OPENAI: LISTAR MODELOS GPT-4+ / GPT-5* (VÍA API5 + CACHE) ===== */
 
 
 
@@ -241,7 +220,6 @@ function phsbot_config_render_page(){
   // Conexiones
   $bot_license_key    = isset($g['bot_license_key'])    ? $g['bot_license_key']    : '';
   $bot_api_url        = isset($g['bot_api_url'])        ? $g['bot_api_url']        : 'https://bocetosmarketing.com/api_claude_5/index.php';
-  $openai_api_key     = isset($g['openai_api_key'])     ? $g['openai_api_key']     : '';
   $telegram_bot_token = isset($g['telegram_bot_token']) ? $g['telegram_bot_token'] : '';
   $telegram_chat_id   = isset($g['telegram_chat_id'])   ? $g['telegram_chat_id']   : '';
   $whatsapp_phone     = isset($g['whatsapp_phone'])     ? $g['whatsapp_phone']     : '';
@@ -480,9 +458,10 @@ PHSBOT_DEF;
         <table class="form-table" role="presentation">
           <tbody>
             <?php
-// Modelos desde OpenAI (en vivo, cacheado) o lista sugerida si no hay API/resultado
+// Modelos desde API5 (en vivo, cacheado) o lista sugerida si no hay licencia BOT
 $api_models = phsbot_openai_list_chat_models();            // usa funciones de config.php
-$has_api    = (phsbot_openai_get_api_key() !== '');
+$license_info = phsbot_get_license_info();
+$has_license = ($license_info['license_key'] !== '');
 $fallback   = array('gpt-5','gpt-5-mini','gpt-4o','gpt-4o-mini','gpt-4.1','gpt-4.1-mini');
 $models     = !empty($api_models) ? $api_models : $fallback;
 ?>
@@ -504,10 +483,10 @@ $models     = !empty($api_models) ? $api_models : $fallback;
     </select>
 
     <p class="description">
-      <?php if (!$has_api): ?>
-        Sin API key: mostrando lista sugerida de modelos recientes (GPT-4+). Añade tu API key para consultar los modelos activos en tu cuenta.
+      <?php if (!$has_license): ?>
+        Sin licencia BOT: mostrando lista sugerida de modelos recientes (GPT-4+). Añade tu licencia BOT para consultar los modelos disponibles.
       <?php else: ?>
-        Lista obtenida en vivo desde tu cuenta de OpenAI (filtrada a modelos GPT-4+ óptimos para chatbot).
+        Lista obtenida vía API5 (filtrada a modelos GPT-4+ óptimos para chatbot).
       <?php endif; ?>
     </p>
   </td>

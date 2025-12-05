@@ -40,8 +40,9 @@ function phsbot_render_chat_settings(){
     $opt['welcome_i18n'] = array();
     $opt['welcome_hash'] = md5(wp_strip_all_tags($opt['welcome']));
 
-    $api_key = (string) phsbot_setting('openai_api_key', '');
-    if ($api_key && $opt['welcome'] !== '') {
+    // Generar traducciones si hay licencia válida (usa API5, no OpenAI directamente)
+    $bot_license = (string) phsbot_setting('bot_license_key', '');
+    if ($bot_license && $opt['welcome'] !== '') {
       $opt['welcome_i18n'] = phsbot_chat_build_welcome_i18n($opt['welcome']);
     }
 
