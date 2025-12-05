@@ -137,14 +137,12 @@ function phsbot_kb_admin_page() {
     $det_root = esc_html($det['scheme'].'://'.$det['host'].$det['path']);
     $act_root = esc_html($act['scheme'].'://'.$act['host'].$act['path']);
     ?>
-    <div class="wrap phsbot-kb-wrap">
+    <div class="wrap phsbot-module-wrap">
 
-        <div class="phsbot-kb-headline-row">
-            <h1 class="phsbot-kb-title">Base de Conocimiento · <strong>KB v5</strong>
-                <span class="phsbot-kb-badge">v<span id="phsbot-kb-version-top"><?php echo esc_html($version); ?></span></span>
-            </h1>
-
-            <div class="phsbot-kb-head-actions">
+        <!-- Header gris estilo GeoWriter -->
+        <div class="phsbot-module-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h1 style="margin: 0;">Base de Conocimiento</h1>
+            <div>
                 <button type="button" class="button button-primary" id="phsbot-kb-save-config-global">Guardar configuración</button>
             </div>
         </div>
