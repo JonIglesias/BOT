@@ -334,7 +334,7 @@ if (!function_exists('sanitize_text_field')) {
 
         <div class="form-group">
             <label>Modelo de IA *</label>
-            <select name="geowrite_ai_model" required>
+            <select name="geowrite_ai_model" required style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%;">
                 <?php foreach ($availableModels as $model): ?>
                     <option value="<?= htmlspecialchars($model) ?>" <?= $model === $geowrite_ai_model ? 'selected' : '' ?>>
                         <?= htmlspecialchars($model) ?>
@@ -373,7 +373,7 @@ if (!function_exists('sanitize_text_field')) {
 
         <div class="form-group">
             <label>Modelo de IA *</label>
-            <select name="bot_ai_model" required>
+            <select name="bot_ai_model" required style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%;">
                 <?php foreach ($availableModels as $model): ?>
                     <option value="<?= htmlspecialchars($model) ?>" <?= $model === $bot_ai_model ? 'selected' : '' ?>>
                         <?= htmlspecialchars($model) ?>
