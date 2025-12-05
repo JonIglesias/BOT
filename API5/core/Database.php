@@ -50,6 +50,13 @@ class Database {
     }
 
     /**
+     * Prepare a statement (for compatibility with existing code)
+     */
+    public function prepare($sql) {
+        return $this->connection->prepare($sql);
+    }
+
+    /**
      * Execute a SELECT query
      */
     public function query($sql, $params = []) {
