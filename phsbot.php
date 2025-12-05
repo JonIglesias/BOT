@@ -75,7 +75,6 @@ if (!class_exists('PHSBOT_Plugin')) {
             add_settings_field('chat_height',   'Altura del chat',        array($this, 'field_chat_height'),   self::PAGE_SLUG, 'phs_section_general');
 
             // Integraciones
-            add_settings_field('openai_api_key',     'Token de ChatGPT (OpenAI API Key)', array($this, 'field_openai_api_key'),     self::PAGE_SLUG, 'phs_section_integrations');
             add_settings_field('telegram_bot_token', 'Token de Telegram (Bot)',           array($this, 'field_telegram_bot_token'), self::PAGE_SLUG, 'phs_section_integrations');
             add_settings_field('telegram_chat_id',   'ID de Telegram (chat/user/channel)',array($this, 'field_telegram_chat_id'),   self::PAGE_SLUG, 'phs_section_integrations');
             add_settings_field('whatsapp_phone',     'Teléfono de WhatsApp (derivación)', array($this, 'field_whatsapp_phone'),     self::PAGE_SLUG, 'phs_section_integrations');
@@ -243,14 +242,6 @@ JS;
         /* ======== FIN field_chat_height ======== */
 
 
-        /* ======== field_openai_api_key: Input token OpenAI ======== */
-        function field_openai_api_key() { $v = (string) self::e('openai_api_key'); ?>
-            <input class="regular-text phs-wide" type="password" name="<?php echo esc_attr(self::OPTION_KEY); ?>[openai_api_key]" value="<?php echo esc_attr($v); ?>" autocomplete="off">
-            <p class="description">Clave de OpenAI.</p>
-        <?php }
-        /* ======== FIN field_openai_api_key ======== */
-
-
         /* ======== field_telegram_bot_token: Input token Telegram ======== */
         function field_telegram_bot_token() { $v = (string) self::e('telegram_bot_token'); ?>
             <input class="regular-text phs-wide" type="password" name="<?php echo esc_attr(self::OPTION_KEY); ?>[telegram_bot_token]" value="<?php echo esc_attr($v); ?>" autocomplete="off">
@@ -362,9 +353,6 @@ JS;
             }
 
             // Conexiones
-            if (array_key_exists('openai_api_key', $input)) {
-                $out['openai_api_key'] = $this->sanitize_token($input['openai_api_key']);
-            }
             if (array_key_exists('bot_license_key', $input)) {
                 $out['bot_license_key'] = $this->sanitize_token($input['bot_license_key']);
             }
