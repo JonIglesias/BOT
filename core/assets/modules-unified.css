@@ -1,12 +1,8 @@
 /**
  * PHSBOT - Unified Modules CSS
  * ===================================
- * Archivo centralizado de estilos para todos los módulos UI
- * Basado en la estructura de GeoWriter pero con colores del chatbot
- *
- * Colores del chatbot:
- * - Primary: #667a3a (verde)
- * - Secondary: #4c5e27 (verde oscuro)
+ * Estilos centralizados para todos los módulos UI
+ * Estructura y colores basados en GeoWriter (gris/blanco/negro)
  */
 
 /* ========================================
@@ -19,9 +15,9 @@
     margin: 20px 0;
 }
 
-/* Header del módulo (H1) */
+/* Header del módulo (gris claro como GeoWriter) */
 .phsbot-module-header {
-    background: linear-gradient(135deg, #667a3a 0%, #4c5e27 100%);
+    background: #dddddd;
     color: white;
     padding: 16px 24px;
     border-radius: 8px;
@@ -36,17 +32,10 @@
     font-weight: 600;
 }
 
-/* Flexbox para header con botones */
-.phsbot-module-header.flex {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
 /* Botones dentro del header */
 .phsbot-module-header .button {
     background: white;
-    color: #4c5e27;
+    color: #3D4A5C;
     border: none;
     padding: 8px 16px;
     border-radius: 6px;
@@ -92,7 +81,7 @@
     padding: 32px;
 }
 
-/* Sidebar */
+/* Sidebar (negro con texto blanco) */
 .phsbot-module-sidebar {
     background: #000000;
     border-radius: 12px;
@@ -108,20 +97,36 @@
 
 .phsbot-module-sidebar h3 {
     color: white;
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 22px;
+    font-weight: 300;
+    line-height: 25px;
     margin: 0 0 16px 0;
+}
+
+.phsbot-module-sidebar h4 {
+    color: white;
+    font-size: 18px;
+    font-weight: 400;
+    margin: 16px 0 8px 0;
 }
 
 .phsbot-module-sidebar p,
 .phsbot-module-sidebar li {
-    font-size: 14px;
+    font-size: 16px;
     line-height: 1.6;
     color: rgba(255, 255, 255, 0.9);
+    margin: 8px 0;
+}
+
+.phsbot-module-sidebar strong {
+    font-weight: 300;
+    font-size: 18px;
+    color: white;
 }
 
 .phsbot-module-sidebar a {
-    color: #ffffff;
+    color: #fcfcfc;
+    font-size: 16px;
     text-decoration: underline;
 }
 
@@ -136,11 +141,6 @@
 
 .phsbot-module-sidebar li {
     margin-bottom: 8px;
-}
-
-.phsbot-module-sidebar strong {
-    font-weight: 600;
-    color: white;
 }
 
 /* Responsive */
@@ -158,14 +158,14 @@
    SECCIONES Y CARDS
    ============================================ */
 
-/* Secciones como cards */
+/* Secciones como cards (sin borde, solo fondo blanco) */
 .phsbot-section {
     background: white;
     border-radius: 8px;
     padding: 24px;
     margin-bottom: 16px;
     box-shadow: none;
-    border: 1px solid #e5e7eb;
+    border: none;
     transition: opacity 0.3s, transform 0.3s;
 }
 
@@ -173,14 +173,21 @@
     margin-bottom: 0;
 }
 
-/* Título de sección con número */
+/* Mega card (contenedor grande) */
+.phsbot-mega-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Título de sección (borde negro) */
 .phsbot-section-title {
     font-size: 18px;
     font-weight: 600;
     color: #1f2937;
     margin: 0 0 20px 0;
     padding-bottom: 12px;
-    border-bottom: 2px solid #667a3a;
+    border-bottom: 2px solid #000000;
     display: flex;
     align-items: center;
 }
@@ -191,7 +198,7 @@
     justify-content: center;
     width: 28px;
     height: 28px;
-    background: #667a3a;
+    background: #000000;
     color: white;
     border-radius: 50%;
     font-size: 14px;
@@ -199,12 +206,26 @@
     margin-right: 12px;
 }
 
+/* Grid de 2 columnas */
+.phsbot-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+    .phsbot-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* ============================================
    BOTONES GLOBALES
    ============================================ */
 
 .phsbot-btn-primary {
-    background: #667a3a !important;
+    background: #000000 !important;
     color: white !important;
     border: none !important;
     border-radius: 6px !important;
@@ -219,9 +240,9 @@
 }
 
 .phsbot-btn-primary:hover {
-    background: #4c5e27 !important;
+    background: #1a1a1a !important;
     transform: translateY(-1px) !important;
-    box-shadow: 0 2px 8px rgba(102, 122, 58, 0.3) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
 .phsbot-btn-secondary {
@@ -260,35 +281,36 @@
     background: #b91c1c !important;
 }
 
+.phsbot-btn-save {
+    background: #000000 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 12px 32px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+}
+
+.phsbot-btn-save:hover {
+    background: #1a1a1a !important;
+    transform: translateY(-1px) !important;
+}
+
 /* ============================================
    FORMULARIOS
    ============================================ */
 
-.phsbot-form-table {
-    width: 100%;
-    border-collapse: collapse;
+.phsbot-field {
+    margin-bottom: 20px;
 }
 
-.phsbot-form-table th {
-    text-align: left;
-    padding: 12px 16px;
-    font-weight: 600;
-    color: #374151;
-    background: #f9fafb;
-    border-bottom: 2px solid #e5e7eb;
+.phsbot-field:last-child {
+    margin-bottom: 0;
 }
 
-.phsbot-form-table td {
-    padding: 16px;
-    border-bottom: 1px solid #f3f4f6;
-    vertical-align: top;
-}
-
-.phsbot-form-table tr:last-child td {
-    border-bottom: none;
-}
-
-.phsbot-form-label {
+.phsbot-label {
     display: block;
     font-weight: 600;
     color: #374151;
@@ -296,9 +318,9 @@
     font-size: 14px;
 }
 
-.phsbot-form-input,
-.phsbot-form-textarea,
-.phsbot-form-select {
+.phsbot-input-field,
+.phsbot-textarea-field,
+.phsbot-select-field {
     width: 100%;
     padding: 10px 14px;
     border: 1px solid #d1d5db;
@@ -306,36 +328,35 @@
     font-size: 14px;
     color: #1f2937;
     transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-.phsbot-form-input:focus,
-.phsbot-form-textarea:focus,
-.phsbot-form-select:focus {
+.phsbot-input-field:focus,
+.phsbot-textarea-field:focus,
+.phsbot-select-field:focus {
     outline: none;
-    border-color: #667a3a;
-    box-shadow: 0 0 0 3px rgba(102, 122, 58, 0.1);
+    border-color: #000000;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
 }
 
-.phsbot-form-textarea {
+.phsbot-textarea-field {
     resize: vertical;
     min-height: 100px;
 }
 
-.phsbot-form-description {
+.phsbot-description {
     font-size: 13px;
-    color: #6b7280;
+    color: #64748b;
     margin-top: 6px;
     line-height: 1.5;
 }
 
-.phsbot-form-row {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 16px;
-}
-
-.phsbot-form-col {
-    flex: 1;
+/* Card interna (dentro de sección) */
+.phsbot-card-inner {
+    background: #fafafa;
+    padding: 16px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
 }
 
 /* ============================================
@@ -374,12 +395,17 @@
     color: #1f2937;
 }
 
-.phsbot-data-table .text-right {
+.phsbot-text-right {
     text-align: right;
 }
 
-.phsbot-data-table .text-center {
+.phsbot-text-center {
     text-align: center;
+}
+
+.phsbot-number {
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
 }
 
 /* ============================================
@@ -459,25 +485,6 @@
     color: #1e40af;
 }
 
-.phsbot-alert-icon {
-    font-size: 20px;
-    line-height: 1;
-}
-
-.phsbot-alert-content {
-    flex: 1;
-}
-
-.phsbot-alert-title {
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-
-.phsbot-alert-message {
-    font-size: 14px;
-    line-height: 1.5;
-}
-
 /* ============================================
    LOADING Y ESTADOS VACÍOS
    ============================================ */
@@ -501,12 +508,6 @@
     padding: 60px 20px;
 }
 
-.phsbot-empty-state-icon {
-    font-size: 48px;
-    color: #d1d5db;
-    margin-bottom: 16px;
-}
-
 .phsbot-empty-state-text {
     color: #9ca3af;
     font-size: 14px;
@@ -523,136 +524,42 @@
 }
 
 /* ============================================
-   TABS Y NAVEGACIÓN
+   HELP ITEMS (para sidebar)
    ============================================ */
 
-.phsbot-tabs {
-    display: flex;
-    border-bottom: 2px solid #e5e7eb;
-    margin-bottom: 24px;
-    gap: 8px;
+.phsbot-help-item {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.phsbot-tab {
-    padding: 12px 20px;
-    background: none;
-    border: none;
-    border-bottom: 3px solid transparent;
-    color: #6b7280;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 14px;
+.phsbot-help-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
 }
 
-.phsbot-tab:hover {
-    color: #374151;
-    background: #f9fafb;
-}
-
-.phsbot-tab.active {
-    color: #667a3a;
-    border-bottom-color: #667a3a;
-}
-
-.phsbot-tab-content {
-    display: none;
-}
-
-.phsbot-tab-content.active {
-    display: block;
-}
-
-/* ============================================
-   CARDS Y PANELES
-   ============================================ */
-
-.phsbot-card {
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    overflow: hidden;
-    margin-bottom: 16px;
-}
-
-.phsbot-card-header {
-    padding: 16px 20px;
-    background: #f9fafb;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.phsbot-card-title {
+.phsbot-help-item h4 {
+    color: white;
     font-size: 16px;
     font-weight: 600;
-    color: #1f2937;
+    margin: 0 0 8px 0;
+}
+
+.phsbot-help-item p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 14px;
+    line-height: 1.6;
     margin: 0;
-}
-
-.phsbot-card-body {
-    padding: 20px;
-}
-
-.phsbot-card-footer {
-    padding: 16px 20px;
-    background: #f9fafb;
-    border-top: 1px solid #e5e7eb;
-}
-
-/* Card con gradiente (para plan, estadísticas, etc.) */
-.phsbot-card-gradient {
-    background: linear-gradient(135deg, #667a3a 0%, #4c5e27 100%);
-    color: white;
-    border: none;
-}
-
-.phsbot-card-gradient .phsbot-card-title {
-    color: white;
-}
-
-/* ============================================
-   LISTAS Y MENÚS
-   ============================================ */
-
-.phsbot-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.phsbot-list-item {
-    padding: 12px 16px;
-    border-bottom: 1px solid #f3f4f6;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: background 0.15s;
-}
-
-.phsbot-list-item:hover {
-    background: #f9fafb;
-}
-
-.phsbot-list-item:last-child {
-    border-bottom: none;
-}
-
-.phsbot-list-item-title {
-    font-weight: 500;
-    color: #1f2937;
-}
-
-.phsbot-list-item-meta {
-    font-size: 13px;
-    color: #6b7280;
 }
 
 /* ============================================
    UTILIDADES
    ============================================ */
 
+.phsbot-text-left { text-align: left; }
 .phsbot-text-center { text-align: center; }
 .phsbot-text-right { text-align: right; }
-.phsbot-text-left { text-align: left; }
 
 .phsbot-text-sm { font-size: 13px; }
 .phsbot-text-base { font-size: 14px; }
@@ -707,9 +614,5 @@
 
     .phsbot-module-header h1 {
         font-size: 20px;
-    }
-
-    .phsbot-form-row {
-        flex-direction: column;
     }
 }
