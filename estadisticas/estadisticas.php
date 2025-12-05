@@ -9,19 +9,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-// Registrar menú de estadísticas
-add_action('admin_menu', 'phsbot_stats_menu', 25);
-function phsbot_stats_menu() {
-    add_submenu_page(
-        'phsbot',
-        'PHSBOT · Estadísticas',
-        'Estadísticas',
-        'manage_options',
-        'phsbot-estadisticas',
-        'phsbot_stats_page'
-    );
-}
-
+// El menú se registra en menu.php
 // Función principal que carga la UI
 function phsbot_stats_page() {
     require_once __DIR__ . '/stats-ui.php';
