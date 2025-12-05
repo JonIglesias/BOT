@@ -9,11 +9,13 @@ add_action('admin_menu', function(){
     echo '<div class="wrap"><h1>PHSBot</h1></div>';
   }, 'dashicons-format-chat', 60);
 
-  add_submenu_page('phsbot', 'Chat & Widget (FLOAT)', 'Chat & Widget', 'manage_options', 'phsbot_chat', 'phsbot_render_chat_settings');
+  // Submenú "Chat & Widget" eliminado - configuración ahora en módulo principal de Configuración
 }, 60);
 
-/* Render ajustes */
+/* Render ajustes - DEPRECATED: Configuración movida a /config/config.php */
 function phsbot_render_chat_settings(){
+  // Esta función ya no se usa - toda la configuración está en el módulo de Configuración
+  return;
   if (!current_user_can('manage_options')) return;
   $saved = false;
 
