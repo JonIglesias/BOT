@@ -113,10 +113,10 @@ function phsbot_config_handle_save(){
   $c['tone']             = isset($_POST['chat_tone'])          ? sanitize_text_field($_POST['chat_tone'])          : ($c['tone']             ?? 'profesional');
   $c['welcome']          = isset($_POST['chat_welcome'])       ? wp_kses_post($_POST['chat_welcome'])              : ($c['welcome']          ?? 'Hola, soy PHSBot. ¿En qué puedo ayudarte?');
   $c['system_prompt']    = isset($_POST['chat_system_prompt']) ? wp_kses_post($_POST['chat_system_prompt'])         : ($c['system_prompt']    ?? '');
-  $c['allow_html']       = !empty($_POST['chat_allow_html'])        ? 1 : (!empty($c['allow_html'])        ? 1 : 0);
-  $c['allow_elementor']  = !empty($_POST['chat_allow_elementor'])   ? 1 : (!empty($c['allow_elementor'])   ? 1 : 0);
-  $c['allow_live_fetch'] = !empty($_POST['chat_allow_live_fetch'])  ? 1 : (!empty($c['allow_live_fetch'])  ? 1 : 0);
-  $c['anchor_paragraph'] = !empty($_POST['chat_anchor_paragraph'])  ? 1 : (!empty($c['anchor_paragraph'])  ? 1 : 0);
+  // Checkboxes: si está en POST = 1, si no está en POST = 0
+  $c['allow_html']       = isset($_POST['chat_allow_html'])       ? 1 : 0;
+  $c['allow_elementor']  = isset($_POST['chat_allow_elementor'])  ? 1 : 0;
+  $c['allow_live_fetch'] = isset($_POST['chat_allow_live_fetch']) ? 1 : 0;
   $c['max_history']      = isset($_POST['chat_max_history'])   ? max(1, intval($_POST['chat_max_history']))        : ($c['max_history']      ?? 10);
   $c['max_tokens']       = isset($_POST['chat_max_tokens'])    ? max(200, intval($_POST['chat_max_tokens']))       : ($c['max_tokens']       ?? 1400);
   $c['max_height_vh']    = isset($_POST['chat_max_height_vh']) ? max(50, intval($_POST['chat_max_height_vh']))     : ($c['max_height_vh']    ?? 70);
@@ -263,10 +263,10 @@ function phsbot_config_render_page(){
   $chat_tone            = isset($c['tone']) ? $c['tone'] : 'profesional';
   $chat_welcome         = isset($c['welcome']) ? $c['welcome'] : 'Hola, soy PHSBot. ¿En qué puedo ayudarte?';
   $chat_system_prompt   = isset($c['system_prompt']) ? $c['system_prompt'] : '';
-  $chat_allow_html      = !empty($c['allow_html']);
-  $chat_allow_elementor = !empty($c['allow_elementor']);
-  $chat_allow_live_fetch= !empty($c['allow_live_fetch']);
-  $chat_anchor_paragraph= !empty($c['anchor_paragraph']);
+  // Valores por defecto = true (marcados) si no hay valor guardado
+  $chat_allow_html      = isset($c['allow_html'])       ? (bool)$c['allow_html']       : true;
+  $chat_allow_elementor = isset($c['allow_elementor'])  ? (bool)$c['allow_elementor']  : true;
+  $chat_allow_live_fetch= isset($c['allow_live_fetch']) ? (bool)$c['allow_live_fetch'] : true;
   $chat_max_history     = isset($c['max_history']) ? intval($c['max_history']) : 10;
   $chat_max_tokens      = isset($c['max_tokens']) ? intval($c['max_tokens']) : 1400;
   $chat_max_height_vh   = isset($c['max_height_vh']) ? intval($c['max_height_vh']) : 70;
@@ -529,20 +529,20 @@ PHSBOT_DEF;
               <!-- Sección: Mensajes -->
               <div class="phsbot-section" style="margin-top: 32px;">
                 <h2 class="phsbot-section-title">Mensajes</h2>
-                
+
                 <div class="phsbot-field">
                   <label class="phsbot-label" for="chat_welcome">Mensaje de Bienvenida</label>
-                  <textarea name="chat_welcome" 
-                            id="chat_welcome" 
-                            rows="2" 
+                  <textarea name="chat_welcome"
+                            id="chat_welcome"
+                            rows="2"
                             class="phsbot-textarea-field"><?php echo esc_textarea($chat_welcome);?></textarea>
                 </div>
 
                 <div class="phsbot-field">
                   <label class="phsbot-label" for="chat_system_prompt">System Prompt</label>
-                  <textarea name="chat_system_prompt" 
-                            id="chat_system_prompt" 
-                            rows="8" 
+                  <textarea name="chat_system_prompt"
+                            id="chat_system_prompt"
+                            rows="8"
                             class="phsbot-textarea-field"><?php echo esc_textarea($chat_system_prompt_display);?></textarea>
                   <button type="button" class="phsbot-btn-secondary" id="phsbot-system-default-btn" style="margin-top: 12px;">
                     Restaurar valor por defecto
@@ -562,6 +562,32 @@ PHSBOT_DEF;
                 </div>
               </div>
 
+              <!-- Sección: Opciones Avanzadas -->
+              <div class="phsbot-section" style="margin-top: 32px;">
+                <h2 class="phsbot-section-title">Opciones Avanzadas</h2>
+
+                <div class="phsbot-field">
+                  <label>
+                    <input type="checkbox" name="chat_allow_html" value="1" <?php checked($chat_allow_html, true); ?>>
+                    Permitir HTML en respuestas
+                  </label>
+                </div>
+
+                <div class="phsbot-field">
+                  <label>
+                    <input type="checkbox" name="chat_allow_elementor" value="1" <?php checked($chat_allow_elementor, true); ?>>
+                    Integración con Elementor
+                  </label>
+                </div>
+
+                <div class="phsbot-field">
+                  <label>
+                    <input type="checkbox" name="chat_allow_live_fetch" value="1" <?php checked($chat_allow_live_fetch, true); ?>>
+                    Live fetch (obtener URL actual)
+                  </label>
+                </div>
+              </div>
+
               <!-- Botón guardar -->
               <div class="phsbot-section" style="margin-top: 32px; border: none; padding: 0;">
                 <button type="submit" class="phsbot-btn-save">Guardar Configuración</button>
@@ -574,8 +600,8 @@ PHSBOT_DEF;
 
       <!-- TAB 3: ASPECTO -->
       <section id="tab-aspecto" class="phsbot-config-panel" aria-hidden="true">
-        <div class="phsbot-module-container">
-          <div class="phsbot-module-content">
+        <div class="phsbot-aspecto-wrapper" style="display: grid; grid-template-columns: 1fr 400px; gap: 24px; align-items: start;">
+          <div class="phsbot-aspecto-left">
             <div class="phsbot-mega-card" style="padding: 32px;">
               
               <!-- Sección: Posición y Tamaño -->
@@ -738,6 +764,57 @@ PHSBOT_DEF;
                 <button type="submit" class="phsbot-btn-save">Guardar Configuración</button>
               </div>
 
+            </div>
+          </div>
+
+          <!-- Preview del Chatbot -->
+          <div class="phsbot-aspecto-right">
+            <div id="phsbot-preview"
+                 data-pos="<?php echo esc_attr($chat_position); ?>"
+                 style="--phsbot-width: <?php echo esc_attr(intval($w_px)); ?>px;
+                        --phsbot-height: <?php echo esc_attr(intval($h_px)); ?>px;
+                        --phsbot-bg: <?php echo esc_attr($color_background); ?>;
+                        --phsbot-text: <?php echo esc_attr($color_text); ?>;
+                        --phsbot-bot-bubble: <?php echo esc_attr($color_bot_bubble); ?>;
+                        --phsbot-user-bubble: <?php echo esc_attr($color_user_bubble); ?>;
+                        --phsbot-primary: <?php echo esc_attr($color_primary); ?>;
+                        --phsbot-secondary: <?php echo esc_attr($color_secondary); ?>;
+                        --phsbot-whatsapp: <?php echo esc_attr($color_whatsapp); ?>;
+                        --phsbot-footer: <?php echo esc_attr($color_footer_preview); ?>;
+                        --phsbot-btn-h: <?php echo esc_attr(intval($btn_height)); ?>px;
+                        --phsbot-head-btn: <?php echo esc_attr(intval($head_btn_size)); ?>px;
+                        --mic-stroke-w: <?php echo esc_attr(intval($mic_stroke_w)); ?>px;
+                        --phsbot-bubble-fs: <?php echo esc_attr(intval($bubble_font_size)); ?>px;">
+              <div class="phs-header">
+                <div class="phs-title"><?php echo esc_html($chat_title); ?></div>
+                <div class="phs-head-actions">
+                  <button type="button" class="phsbot-btn phsbot-mic" style="width: 32px; height: 32px;" title="Cerrar" aria-label="Cerrar">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="phs-messages" style="font-size: var(--phsbot-bubble-fs, 15px);">
+                <div class="phs-msg bot"><div class="phsbot-bubble"><p>¡Hola! ¿Me dices tu nombre y en qué puedo ayudarte?</p></div></div>
+                <div class="phs-msg user"><div class="phsbot-bubble"><p>Aquí va la respuesta del usuario, normalmente un sin sentido...</p></div></div>
+              </div>
+              <div class="phs-input">
+                <button class="phsbot-btn phsbot-mic" id="phsbot-mic" type="button" aria-label="<?php echo esc_attr_x('Micrófono', 'Microphone button', 'phsbot'); ?>">
+                  <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
+                    <g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="3" width="6" height="10" rx="3"/>
+                      <path d="M5 11a7 7 0 0 0 14 0"/>
+                      <line x1="12" y1="17" x2="12" y2="20"/>
+                      <line x1="9"  y1="21" x2="15" y2="21"/>
+                    </g>
+                  </svg>
+                </button>
+                <textarea style="border-radius:99px;height:50px" id="phsbot-q" disabled placeholder="Escribe un mensaje…"></textarea>
+                <button class="phsbot-btn phsbot-mic" id="phsbot-send" type="button">
+                  <svg viewBox="0 0 24 24" role="img" focusable="false" aria-hidden="true">
+                    <polygon points="12,6 18,18 6,18" fill="currentColor"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
