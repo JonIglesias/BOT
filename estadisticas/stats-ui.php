@@ -43,13 +43,13 @@
                             <svg id="liquid-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
                                 <defs>
                                     <linearGradient id="liquidGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                        <stop offset="0%" style="stop-color:#667a3a;stop-opacity:1" />
-                                        <stop offset="100%" style="stop-color:#4c5e27;stop-opacity:1" />
+                                        <stop offset="0%" style="stop-color:#000000;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
                                     </linearGradient>
                                 </defs>
                                 <path id="liquid-wave" fill="url(#liquidGradient)"/>
                             </svg>
-                            <!-- Texto verde (visible donde NO hay líquido) -->
+                            <!-- Texto negro (visible donde NO hay líquido) -->
                             <div id="tokens-available-green">
                                 <div class="tokens-number" id="tokens-number-green">0</div>
                                 <div class="tokens-label">tokens disponibles</div>
