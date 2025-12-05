@@ -317,261 +317,437 @@ PHSBOT_DEF;
   // Si no hay prompt guardado, mostrar el por defecto en el textarea
   $chat_system_prompt_display = ($chat_system_prompt !== '') ? $chat_system_prompt : $default_system_prompt;
   ?>
-  <div class="wrap phsbot-config-wrap" data-phsbot-config="v1.3.2">
-    <h1 class="wp-heading-inline">PHSBOT · Configuración</h1>
+  <div class="wrap phsbot-module-wrap">
+    <!-- Header gris estilo GeoWriter -->
+    <div class="phsbot-module-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <h1 style="margin: 0;">Configuración</h1>
+    </div>
+
     <?php if (!empty($_GET['updated'])): ?>
-      <div class="notice notice-success is-dismissible"><p>Configuración guardada.</p></div>
+      <div class="phsbot-alert phsbot-alert-success">
+        Configuración guardada correctamente.
+      </div>
     <?php endif; ?>
 
+    <!-- Tabs de navegación -->
     <h2 class="nav-tab-wrapper phsbot-config-tabs" role="tablist" aria-label="PHSBOT Config">
-      <a href="#tab-aspecto"     class="nav-tab nav-tab-active" role="tab" aria-selected="true">Aspecto del chat</a>
-      <a href="#tab-chat"        class="nav-tab" role="tab" aria-selected="false">Chat (IA)</a>
-      <a href="#tab-conexiones"  class="nav-tab" role="tab" aria-selected="false">Conexiones</a>
+      <a href="#tab-conexiones" class="nav-tab nav-tab-active" role="tab" aria-selected="true">Conexiones</a>
+      <a href="#tab-chat" class="nav-tab" role="tab" aria-selected="false">Chat (IA)</a>
+      <a href="#tab-aspecto" class="nav-tab" role="tab" aria-selected="false">Aspecto</a>
     </h2>
 
     <form action="<?php echo esc_url( admin_url('admin-post.php') ); ?>" method="post" class="phsbot-config-form">
       <?php wp_nonce_field('phsbot_config_save','_phsbot_config_nonce'); ?>
       <input type="hidden" name="action" value="phsbot_config_save" />
 
-      <section id="tab-aspecto" class="phsbot-config-panel" aria-hidden="false">
-        <div class="phsbot-aspecto-grid">
-          <div class="phsbot-aspecto-left">
-            <table class="form-table" role="presentation">
-              <tbody>
-                <tr>
-                  <th scope="row">Posición</th>
-                  <td>
-                    <select name="chat_position" id="chat_position">
-                      <option value="bottom-right" <?php selected($chat_position,'bottom-right');?>>Inferior derecha</option>
-                      <option value="bottom-left"  <?php selected($chat_position,'bottom-left');?>>Inferior izquierda</option>
-                      <option value="top-right"    <?php selected($chat_position,'top-right');?>>Superior derecha</option>
-                      <option value="top-left"     <?php selected($chat_position,'top-left');?>>Superior izquierda</option>
-                    </select>
-                  </td>
-                </tr>
-
-                <tr>
-                  <th scope="row">Título cabecera</th>
-                  <td>
-                    <input type="text" name="chat_title" class="regular-text"
-                           value="<?php echo esc_attr($chat_title); ?>" placeholder="PHSBot">
-                  </td>
-                </tr>
-
-                <tr>
-                  <th scope="row">Texto de los mensajes</th>
-                  <td>
-                    <div class="phsbot-slider-row">
-                      <label for="bubble_font_size">Tamaño de fuente</label>
-                      <input type="range" id="bubble_font_size" name="bubble_font_size"
-                             min="12" max="22" step="1"
-                             value="<?php echo esc_attr($bubble_font_size); ?>">
-                      <span id="bubble_font_size_val"><?php echo esc_html($bubble_font_size); ?> px</span>
-                    </div>
-                  </td>
-                </tr>
-
-                <tr>
-                  <th scope="row">Tamaño</th>
-                  <td>
-                    <div class="phsbot-slider-row">
-                      <label for="chat_width_slider">Ancho</label>
-                      <input type="range" id="chat_width_slider" min="260" max="920" step="2" value="<?php echo esc_attr($w_px);?>">
-                      <span id="chat_width_val"><?php echo esc_html($w_px);?> px</span>
-                      <input type="hidden" id="chat_width" name="chat_width" value="<?php echo esc_attr($w_px.'px');?>">
-                    </div>
-                    <div class="phsbot-slider-row">
-                      <label for="chat_height_slider">Alto</label>
-                      <input type="range" id="chat_height_slider" min="420" max="960" step="2" value="<?php echo esc_attr($h_px);?>">
-                      <span id="chat_height_val"><?php echo esc_html($h_px);?> px</span>
-                      <input type="hidden" id="chat_height" name="chat_height" value="<?php echo esc_attr($h_px.'px');?>">
-                    </div>
-                  </td>
-                </tr>
-
-                <tr>
-                  <th scope="row">Colores</th>
-                  <td>
-                    <fieldset class="phsbot-colors">
-                      <input type="text" name="color_primary"     class="phsbot-color" value="<?php echo esc_attr($color_primary);?>"> Cabecera<br>
-                      <input type="text" name="color_secondary"   class="phsbot-color" value="<?php echo esc_attr($color_secondary);?>"> Hovers<br>
-                      <input type="text" name="color_background"  class="phsbot-color" value="<?php echo esc_attr($color_background);?>"> Fondo del chat<br>
-                      <input type="text" name="color_text"        class="phsbot-color" value="<?php echo esc_attr($color_text);?>"> Texto general<br>
-                      <input type="text" name="color_bot_bubble"  class="phsbot-color" value="<?php echo esc_attr($color_bot_bubble);?>"> Burbuja BOT<br>
-                      <input type="text" name="color_user_bubble" class="phsbot-color" value="<?php echo esc_attr($color_user_bubble);?>"> Burbuja Usuario<br>
-                      <input type="text" name="color_footer"      class="phsbot-color"
-                             value="<?php echo esc_attr($color_footer_saved); ?>"
-                             data-default-color="<?php echo esc_attr($color_footer_saved ?: $color_background); ?>">
-                      Pie del panel / footer<br>
-                    </fieldset>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="phsbot-aspecto-right">
-            <div id="phsbot-preview"
-                 data-pos="<?php echo esc_attr($chat_position); ?>"
-                 style="--phsbot-width: <?php echo esc_attr(intval($w_px)); ?>px;
-                        --phsbot-height: <?php echo esc_attr(intval($h_px)); ?>px;
-                        --phsbot-bg: <?php echo esc_attr($color_background); ?>;
-                        --phsbot-text: <?php echo esc_attr($color_text); ?>;
-                        --phsbot-bot-bubble: <?php echo esc_attr($color_bot_bubble); ?>;
-                        --phsbot-user-bubble: <?php echo esc_attr($color_user_bubble); ?>;
-                        --phsbot-primary: <?php echo esc_attr($color_primary); ?>;
-                        --phsbot-secondary: <?php echo esc_attr($color_secondary); ?>;
-                        --phsbot-whatsapp: <?php echo esc_attr($color_whatsapp); ?>;
-                        --phsbot-footer: <?php echo esc_attr($color_footer_preview); ?>;
-                        --phsbot-btn-h: <?php echo esc_attr(intval($btn_height)); ?>px;
-                        --phsbot-head-btn: <?php echo esc_attr(intval($head_btn_size)); ?>px;
-                        --mic-stroke-w: <?php echo esc_attr(intval($mic_stroke_w)); ?>px;
-                        --phsbot-bubble-fs: <?php echo esc_attr(intval($bubble_font_size)); ?>px;">
-              <div class="phs-header">
-                <div class="phs-title"><?php echo esc_html($chat_title); ?></div>
-                <div class="phs-head-actions">
-                  <button type="button" class="phsbot-btn phsbot-mic" style="width: 32px; height: 32px;" title="Cerrar" aria-label="Cerrar">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <!-- TAB 1: CONEXIONES -->
+      <section id="tab-conexiones" class="phsbot-config-panel" aria-hidden="false">
+        <div class="phsbot-module-container has-sidebar">
+          <div class="phsbot-module-content">
+            <div class="phsbot-mega-card" style="padding: 32px;">
+              
+              <!-- Sección: Licencia BOT -->
+              <div class="phsbot-section">
+                <h2 class="phsbot-section-title">Licencia BOT</h2>
+                
+                <div class="phsbot-field">
+                  <label class="phsbot-label" for="bot_license_key">License Key</label>
+                  <input type="text" 
+                         name="bot_license_key" 
+                         id="bot_license_key" 
+                         class="phsbot-input-field" 
+                         placeholder="BOT-XXXX-XX-XXXX-XXXXXXXX" 
+                         value="<?php echo esc_attr($bot_license_key);?>">
+                  <p class="phsbot-description">Introduce tu clave de licencia del chatbot.</p>
+                  <button type="button" class="phsbot-btn-secondary" id="phsbot-validate-license" style="margin-top: 12px;">
+                    Validar Licencia
                   </button>
                 </div>
+
+                <div class="phsbot-field">
+                  <label class="phsbot-label" for="bot_api_url">API URL</label>
+                  <input type="text" 
+                         name="bot_api_url" 
+                         id="bot_api_url" 
+                         class="phsbot-input-field" 
+                         value="<?php echo esc_attr($bot_api_url);?>">
+                  <p class="phsbot-description">URL de la API del chatbot.</p>
+                </div>
+
+                <!-- Status de validación -->
+                <div id="phsbot-license-status" style="margin-top: 20px;"></div>
               </div>
-              <!-- 👇 APLICAMOS AQUÍ LA VARIABLE PARA QUE SE VEA EL TAMAÑO EN LA PREVIEW -->
-              <div class="phs-messages" style="font-size: var(--phsbot-bubble-fs, 15px);">
-                <div class="phs-msg bot"><div class="phsbot-bubble"><p>¡Hola! ¿Me dices tu nombre y en que puedo ayudarte?.</p></div></div>
-                <div class="phs-msg user"><div class="phsbot-bubble"><p>Aqui va la respuesta del usuario, normalmente un sin sentido...</p></div></div>
+
+              <!-- Sección: Telegram -->
+              <div class="phsbot-section" style="margin-top: 32px;">
+                <h2 class="phsbot-section-title">Notificaciones Telegram</h2>
+                
+                <div class="phsbot-grid-2">
+                  <div class="phsbot-field">
+                    <label class="phsbot-label" for="telegram_bot_token">Token del Bot</label>
+                    <input type="text" 
+                           name="telegram_bot_token" 
+                           id="telegram_bot_token" 
+                           class="phsbot-input-field" 
+                           value="<?php echo esc_attr($telegram_bot_token);?>">
+                  </div>
+
+                  <div class="phsbot-field">
+                    <label class="phsbot-label" for="telegram_chat_id">Chat ID</label>
+                    <input type="text" 
+                           name="telegram_chat_id" 
+                           id="telegram_chat_id" 
+                           class="phsbot-input-field" 
+                           value="<?php echo esc_attr($telegram_chat_id);?>">
+                  </div>
+                </div>
               </div>
-              <div class="phs-input">
-                <button class="phsbot-btn phsbot-mic" id="phsbot-mic" type="button" aria-label="<?php echo esc_attr_x('Micrófono', 'Microphone button', 'phsbot'); ?>">
-                  <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
-                    <g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="9" y="3" width="6" height="10" rx="3"/>
-                      <path d="M5 11a7 7 0 0 0 14 0"/>
-                      <line x1="12" y1="17" x2="12" y2="20"/>
-                      <line x1="9"  y1="21" x2="15" y2="21"/>
-                    </g>
-                  </svg>
-                </button>
-                <textarea style="border-radius:99px;height:50px" id="phsbot-q" disabled placeholder="Escribe un mensaje…"></textarea>
-                <button class="phsbot-btn phsbot-mic" id="phsbot-send" type="button">
-                  <svg viewBox="0 0 24 24" role="img" focusable="false" aria-hidden="true">
-                    <polygon points="12,6 18,18 6,18" fill="currentColor"/>
-                  </svg>
-                </button>
+
+              <!-- Sección: WhatsApp -->
+              <div class="phsbot-section" style="margin-top: 32px;">
+                <h2 class="phsbot-section-title">WhatsApp</h2>
+                
+                <div class="phsbot-field">
+                  <label class="phsbot-label" for="whatsapp_phone">Teléfono (Formato E.164)</label>
+                  <input type="text" 
+                         name="whatsapp_phone" 
+                         id="whatsapp_phone" 
+                         class="phsbot-input-field" 
+                         placeholder="+34123456789" 
+                         value="<?php echo esc_attr($whatsapp_phone);?>">
+                  <p class="phsbot-description">Número de teléfono en formato internacional.</p>
+                </div>
               </div>
+
+              <!-- Botón guardar -->
+              <div class="phsbot-section" style="margin-top: 32px; border: none; padding: 0;">
+                <button type="submit" class="phsbot-btn-save">Guardar Configuración</button>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Sidebar de ayuda -->
+          <div class="phsbot-module-sidebar">
+            <div class="phsbot-help-item">
+              <h4>💡 Licencia BOT</h4>
+              <p>Necesitas una licencia válida para usar el chatbot. La licencia comienza con BOT-.</p>
+            </div>
+
+            <div class="phsbot-help-item">
+              <h4>📱 Telegram</h4>
+              <p>Configura un bot de Telegram para recibir notificaciones de leads importantes.</p>
+            </div>
+
+            <div class="phsbot-help-item">
+              <h4>💬 WhatsApp</h4>
+              <p>Número de contacto para mostrar en el chatbot.</p>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- TAB Chat -->
+      <!-- TAB 2: CHAT (IA) -->
       <section id="tab-chat" class="phsbot-config-panel" aria-hidden="true">
-        <table class="form-table" role="presentation">
-          <tbody>
-            <?php
-// Modelos desde API5 (en vivo, cacheado) o lista sugerida si no hay licencia BOT
-$api_models = phsbot_openai_list_chat_models();            // usa funciones de config.php
-$license_info = phsbot_get_license_info();
-$has_license = ($license_info['license_key'] !== '');
-$fallback   = array('gpt-5','gpt-5-mini','gpt-4o','gpt-4o-mini','gpt-4.1','gpt-4.1-mini');
-$models     = !empty($api_models) ? $api_models : $fallback;
-?>
-<tr>
-  <th scope="row"><label for="chat_model">Modelo</label></th>
-  <td>
-    <select name="chat_model" id="chat_model" class="regular-text">
-      <?php foreach ($models as $mid): ?>
-        <option value="<?php echo esc_attr($mid); ?>" <?php selected($chat_model, $mid); ?>>
-          <?php echo esc_html(phsbot_openai_model_label($mid)); ?>
-        </option>
-      <?php endforeach; ?>
+        <div class="phsbot-module-container">
+          <div class="phsbot-module-content">
+            <div class="phsbot-mega-card" style="padding: 32px;">
+              
+              <!-- Sección: Configuración del Modelo -->
+              <div class="phsbot-section">
+                <h2 class="phsbot-section-title">Configuración del Modelo</h2>
+                
+                <?php
+                $api_models = phsbot_openai_list_chat_models();
+                $license_info = phsbot_get_license_info();
+                $has_license = ($license_info['license_key'] !== '');
+                $fallback = array('gpt-5','gpt-5-mini','gpt-4o','gpt-4o-mini','gpt-4.1','gpt-4.1-mini');
+                $models = !empty($api_models) ? $api_models : $fallback;
+                ?>
 
-      <?php if (!empty($chat_model) && !in_array($chat_model, $models, true)): ?>
-        <option value="<?php echo esc_attr($chat_model); ?>" selected>
-          <?php echo esc_html('Personalizado: '.$chat_model); ?>
-        </option>
-      <?php endif; ?>
-    </select>
+                <div class="phsbot-grid-2">
+                  <div class="phsbot-field">
+                    <label class="phsbot-label" for="chat_model">Modelo</label>
+                    <select name="chat_model" id="chat_model" class="phsbot-select-field">
+                      <?php foreach ($models as $mid): ?>
+                        <option value="<?php echo esc_attr($mid); ?>" <?php selected($chat_model, $mid); ?>>
+                          <?php echo esc_html(phsbot_openai_model_label($mid)); ?>
+                        </option>
+                      <?php endforeach; ?>
+                      <?php if (!empty($chat_model) && !in_array($chat_model, $models, true)): ?>
+                        <option value="<?php echo esc_attr($chat_model); ?>" selected>
+                          <?php echo esc_html('Personalizado: '.$chat_model); ?>
+                        </option>
+                      <?php endif; ?>
+                    </select>
+                    <p class="phsbot-description">
+                      <?php if (!$has_license): ?>
+                        Sin licencia BOT: mostrando lista sugerida.
+                      <?php else: ?>
+                        Lista obtenida vía API5.
+                      <?php endif; ?>
+                    </p>
+                  </div>
 
-    <p class="description">
-      <?php if (!$has_license): ?>
-        Sin licencia BOT: mostrando lista sugerida de modelos recientes (GPT-4+). Añade tu licencia BOT para consultar los modelos disponibles.
-      <?php else: ?>
-        Lista obtenida vía API5 (filtrada a modelos GPT-4+ óptimos para chatbot).
-      <?php endif; ?>
-    </p>
-  </td>
-</tr>
-            <tr><th scope="row">Temperatura</th>
-              <td><input type="number" step="0.05" min="0" max="2" name="chat_temperature" value="<?php echo esc_attr($chat_temperature);?>" style="width:120px"></td></tr>
-            <tr><th scope="row">Máx. tokens de respuesta</th>
-              <td>
-                <input type="number" min="200" step="50" name="chat_max_tokens" value="<?php echo esc_attr($chat_max_tokens);?>" style="width:140px">
-                <p class="description">Límite de tokens para la <em>completion</em> del asistente.</p>
-              </td></tr>
-            <tr><th scope="row">Tono</th>
-              <td><input type="text" name="chat_tone" value="<?php echo esc_attr($chat_tone);?>" class="regular-text"></td></tr>
-            <tr><th scope="row">Saludo</th>
-              <td><textarea name="chat_welcome" rows="2" class="large-text"><?php echo esc_textarea($chat_welcome);?></textarea></td></tr>
-            <tr><th scope="row">System prompt</th>
-              <td>
-                <textarea name="chat_system_prompt" id="chat_system_prompt" rows="8" class="large-text"><?php echo esc_textarea($chat_system_prompt_display);?></textarea>
-                <p style="margin-top:6px;">
-                  <button type="button" class="button" id="phsbot-system-default-btn">Restaurar valor por defecto</button>
-                  <span class="description">Rellena el prompt recomendado (ajustado a <?php echo esc_html($root_url); ?>).</span>
-                </p>
-                <script>
-                  (function(){
-                    var btn = document.getElementById('phsbot-system-default-btn');
-                    var ta  = document.getElementById('chat_system_prompt');
-                    if(!btn || !ta) return;
-                    var DEFAULT_PROMPT = <?php echo json_encode($default_system_prompt); ?>;
-                    btn.addEventListener('click', function(){
-                      ta.value = DEFAULT_PROMPT;
-                      ta.dispatchEvent(new Event('input', {bubbles:true}));
-                    });
-                  })();
-                </script>
-              </td></tr>
-          </tbody>
-        </table>
+                  <div class="phsbot-field">
+                    <label class="phsbot-label" for="chat_temperature">Temperatura (0-2)</label>
+                    <input type="number" 
+                           step="0.05" 
+                           min="0" 
+                           max="2" 
+                           name="chat_temperature" 
+                           id="chat_temperature" 
+                           class="phsbot-input-field" 
+                           value="<?php echo esc_attr($chat_temperature);?>">
+                  </div>
+                </div>
+
+                <div class="phsbot-grid-2">
+                  <div class="phsbot-field">
+                    <label class="phsbot-label" for="chat_max_tokens">Máx. tokens de respuesta</label>
+                    <input type="number" 
+                           min="200" 
+                           step="50" 
+                           name="chat_max_tokens" 
+                           id="chat_max_tokens" 
+                           class="phsbot-input-field" 
+                           value="<?php echo esc_attr($chat_max_tokens);?>">
+                    <p class="phsbot-description">Límite de tokens para la completion del asistente.</p>
+                  </div>
+
+                  <div class="phsbot-field">
+                    <label class="phsbot-label" for="chat_tone">Tono</label>
+                    <input type="text" 
+                           name="chat_tone" 
+                           id="chat_tone" 
+                           class="phsbot-input-field" 
+                           value="<?php echo esc_attr($chat_tone);?>">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sección: Mensajes -->
+              <div class="phsbot-section" style="margin-top: 32px;">
+                <h2 class="phsbot-section-title">Mensajes</h2>
+                
+                <div class="phsbot-field">
+                  <label class="phsbot-label" for="chat_welcome">Mensaje de Bienvenida</label>
+                  <textarea name="chat_welcome" 
+                            id="chat_welcome" 
+                            rows="2" 
+                            class="phsbot-textarea-field"><?php echo esc_textarea($chat_welcome);?></textarea>
+                </div>
+
+                <div class="phsbot-field">
+                  <label class="phsbot-label" for="chat_system_prompt">System Prompt</label>
+                  <textarea name="chat_system_prompt" 
+                            id="chat_system_prompt" 
+                            rows="8" 
+                            class="phsbot-textarea-field"><?php echo esc_textarea($chat_system_prompt_display);?></textarea>
+                  <button type="button" class="phsbot-btn-secondary" id="phsbot-system-default-btn" style="margin-top: 12px;">
+                    Restaurar valor por defecto
+                  </button>
+                  <script>
+                    (function(){
+                      var btn = document.getElementById('phsbot-system-default-btn');
+                      var ta  = document.getElementById('chat_system_prompt');
+                      if(!btn || !ta) return;
+                      var DEFAULT_PROMPT = <?php echo json_encode($default_system_prompt); ?>;
+                      btn.addEventListener('click', function(){
+                        ta.value = DEFAULT_PROMPT;
+                        ta.dispatchEvent(new Event('input', {bubbles:true}));
+                      });
+                    })();
+                  </script>
+                </div>
+              </div>
+
+              <!-- Botón guardar -->
+              <div class="phsbot-section" style="margin-top: 32px; border: none; padding: 0;">
+                <button type="submit" class="phsbot-btn-save">Guardar Configuración</button>
+              </div>
+
+            </div>
+          </div>
+        </div>
       </section>
 
-      <!-- TAB Conexiones -->
-      <section id="tab-conexiones" class="phsbot-config-panel" aria-hidden="true">
-        <table class="form-table" role="presentation">
-          <tbody>
-            <tr><th scope="row">Bot License Key</th>
-              <td>
-                <input type="text" name="bot_license_key" id="bot_license_key" class="regular-text" placeholder="BOT-XXXX-XX-XXXX-XXXXXXXX" value="<?php echo esc_attr($bot_license_key);?>">
-                <button type="button" class="button" id="phsbot-validate-license">Validar Licencia</button>
-                <p class="description">Introduce tu clave de licencia del chatbot (formato: BOT-XXXX-XX-XXXX-XXXXXXXX).</p>
-              </td>
-            </tr>
-            <tr><th scope="row">Bot API URL</th>
-              <td>
-                <input type="text" name="bot_api_url" id="bot_api_url" class="regular-text" value="<?php echo esc_attr($bot_api_url);?>">
-                <p class="description">URL de la API del chatbot (por defecto: https://bocetosmarketing.com/api_claude_5/index.php).</p>
-              </td>
-            </tr>
-            <tr><th scope="row">Token de Telegram</th>
-              <td><input type="text" name="telegram_bot_token" class="regular-text" value="<?php echo esc_attr($telegram_bot_token);?>"></td></tr>
-            <tr><th scope="row">ID de Telegram</th>
-              <td><input type="text" name="telegram_chat_id" class="regular-text" value="<?php echo esc_attr($telegram_chat_id);?>"></td></tr>
-            <tr><th scope="row">Teléfono de WhatsApp (E.164)</th>
-              <td><input type="text" name="whatsapp_phone" class="regular-text" placeholder="+34123456789" value="<?php echo esc_attr($whatsapp_phone);?>"></td></tr>
-          </tbody>
-        </table>
+      <!-- TAB 3: ASPECTO -->
+      <section id="tab-aspecto" class="phsbot-config-panel" aria-hidden="true">
+        <div class="phsbot-module-container">
+          <div class="phsbot-module-content">
+            <div class="phsbot-mega-card" style="padding: 32px;">
+              
+              <!-- Sección: Posición y Tamaño -->
+              <div class="phsbot-section">
+                <h2 class="phsbot-section-title">Posición y Tamaño</h2>
+                
+                <div class="phsbot-grid-2">
+                  <div class="phsbot-field">
+                    <label class="phsbot-label" for="chat_position">Posición</label>
+                    <select name="chat_position" id="chat_position" class="phsbot-select-field">
+                      <option value="bottom-right" <?php selected($chat_position,'bottom-right');?>>Inferior derecha</option>
+                      <option value="bottom-left"  <?php selected($chat_position,'bottom-left');?>>Inferior izquierda</option>
+                      <option value="top-right"    <?php selected($chat_position,'top-right');?>>Superior derecha</option>
+                      <option value="top-left"     <?php selected($chat_position,'top-left');?>>Superior izquierda</option>
+                    </select>
+                  </div>
+
+                  <div class="phsbot-field">
+                    <label class="phsbot-label" for="chat_title">Título cabecera</label>
+                    <input type="text" 
+                           name="chat_title" 
+                           id="chat_title" 
+                           class="phsbot-input-field" 
+                           value="<?php echo esc_attr($chat_title); ?>" 
+                           placeholder="PHSBot">
+                  </div>
+                </div>
+
+                <div class="phsbot-grid-2">
+                  <div class="phsbot-field">
+                    <label class="phsbot-label">Ancho: <span id="chat_width_val"><?php echo esc_html($w_px);?> px</span></label>
+                    <input type="range" 
+                           id="chat_width_slider" 
+                           min="260" 
+                           max="920" 
+                           step="2" 
+                           value="<?php echo esc_attr($w_px);?>" 
+                           style="width: 100%;">
+                    <input type="hidden" id="chat_width" name="chat_width" value="<?php echo esc_attr($w_px.'px');?>">
+                  </div>
+
+                  <div class="phsbot-field">
+                    <label class="phsbot-label">Alto: <span id="chat_height_val"><?php echo esc_html($h_px);?> px</span></label>
+                    <input type="range" 
+                           id="chat_height_slider" 
+                           min="420" 
+                           max="960" 
+                           step="2" 
+                           value="<?php echo esc_attr($h_px);?>" 
+                           style="width: 100%;">
+                    <input type="hidden" id="chat_height" name="chat_height" value="<?php echo esc_attr($h_px.'px');?>">
+                  </div>
+                </div>
+
+                <div class="phsbot-field">
+                  <label class="phsbot-label">Tamaño de fuente: <span id="bubble_font_size_val"><?php echo esc_html($bubble_font_size); ?> px</span></label>
+                  <input type="range" 
+                         id="bubble_font_size" 
+                         name="bubble_font_size" 
+                         min="12" 
+                         max="22" 
+                         step="1" 
+                         value="<?php echo esc_attr($bubble_font_size); ?>" 
+                         style="width: 100%;">
+                </div>
+              </div>
+
+              <!-- Sección: Colores -->
+              <div class="phsbot-section" style="margin-top: 32px;">
+                <h2 class="phsbot-section-title">Colores</h2>
+                
+                <div class="phsbot-grid-2">
+                  <div class="phsbot-field">
+                    <label class="phsbot-label">Color Primario (Cabecera)</label>
+                    <input type="text" name="color_primary" class="phsbot-color phsbot-input-field" value="<?php echo esc_attr($color_primary);?>">
+                  </div>
+
+                  <div class="phsbot-field">
+                    <label class="phsbot-label">Color Secundario (Hovers)</label>
+                    <input type="text" name="color_secondary" class="phsbot-color phsbot-input-field" value="<?php echo esc_attr($color_secondary);?>">
+                  </div>
+
+                  <div class="phsbot-field">
+                    <label class="phsbot-label">Fondo del Chat</label>
+                    <input type="text" name="color_background" class="phsbot-color phsbot-input-field" value="<?php echo esc_attr($color_background);?>">
+                  </div>
+
+                  <div class="phsbot-field">
+                    <label class="phsbot-label">Texto General</label>
+                    <input type="text" name="color_text" class="phsbot-color phsbot-input-field" value="<?php echo esc_attr($color_text);?>">
+                  </div>
+
+                  <div class="phsbot-field">
+                    <label class="phsbot-label">Burbuja del Bot</label>
+                    <input type="text" name="color_bot_bubble" class="phsbot-color phsbot-input-field" value="<?php echo esc_attr($color_bot_bubble);?>">
+                  </div>
+
+                  <div class="phsbot-field">
+                    <label class="phsbot-label">Burbuja del Usuario</label>
+                    <input type="text" name="color_user_bubble" class="phsbot-color phsbot-input-field" value="<?php echo esc_attr($color_user_bubble);?>">
+                  </div>
+
+                  <div class="phsbot-field">
+                    <label class="phsbot-label">WhatsApp</label>
+                    <input type="text" name="color_whatsapp" class="phsbot-color phsbot-input-field" value="<?php echo esc_attr($color_whatsapp);?>">
+                  </div>
+
+                  <div class="phsbot-field">
+                    <label class="phsbot-label">Color Footer (opcional)</label>
+                    <input type="text" name="color_footer" class="phsbot-color phsbot-input-field" value="<?php echo esc_attr($color_footer_saved);?>">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sección: Controles Avanzados -->
+              <div class="phsbot-section" style="margin-top: 32px;">
+                <h2 class="phsbot-section-title">Controles Avanzados</h2>
+                
+                <div class="phsbot-grid-2">
+                  <div class="phsbot-field">
+                    <label class="phsbot-label">Altura Botón: <span id="btn_height_val"><?php echo esc_html($btn_height); ?> px</span></label>
+                    <input type="range" 
+                           id="btn_height" 
+                           name="btn_height" 
+                           min="36" 
+                           max="56" 
+                           step="2" 
+                           value="<?php echo esc_attr($btn_height); ?>" 
+                           style="width: 100%;">
+                  </div>
+
+                  <div class="phsbot-field">
+                    <label class="phsbot-label">Tamaño Iconos: <span id="head_btn_size_val"><?php echo esc_html($head_btn_size); ?> px</span></label>
+                    <input type="range" 
+                           id="head_btn_size" 
+                           name="head_btn_size" 
+                           min="20" 
+                           max="34" 
+                           step="2" 
+                           value="<?php echo esc_attr($head_btn_size); ?>" 
+                           style="width: 100%;">
+                  </div>
+
+                  <div class="phsbot-field">
+                    <label class="phsbot-label">Grosor Micrófono: <span id="mic_stroke_w_val"><?php echo esc_html($mic_stroke_w); ?> px</span></label>
+                    <input type="range" 
+                           id="mic_stroke_w" 
+                           name="mic_stroke_w" 
+                           min="1" 
+                           max="3" 
+                           step="1" 
+                           value="<?php echo esc_attr($mic_stroke_w); ?>" 
+                           style="width: 100%;">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Botón guardar -->
+              <div class="phsbot-section" style="margin-top: 32px; border: none; padding: 0;">
+                <button type="submit" class="phsbot-btn-save">Guardar Configuración</button>
+              </div>
+
+            </div>
+          </div>
+        </div>
       </section>
 
-      <?php submit_button('Guardar configuración'); ?>
     </form>
 
-    <!-- Status de validación de licencia (fuera del form para evitar problemas con POST) -->
-    <div id="phsbot-license-status" style="margin-top:20px; max-width:800px;"></div>
-
-    <!-- Widget informativo del plan -->
-    <div id="phsbot-plan-widget" style="margin-top:30px; max-width:800px; display:none;">
-      <div style="background: linear-gradient(135deg, #667a3a 0%, #4c5e27 100%); color: #fff; border-radius: 8px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <!-- Widget informativo del plan (fuera del form) -->
+    <div id="phsbot-plan-widget" style="margin-top: 30px; display: none;">
+      <div style="background: #000000; color: #fff; border-radius: 8px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">
           ℹ️ Información del Plan
         </h3>
