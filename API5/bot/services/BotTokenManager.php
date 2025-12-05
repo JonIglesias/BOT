@@ -113,7 +113,7 @@ class BotTokenManager {
                 AND operation_type = ?
                 AND created_at >= ?";
 
-        $summary = $db->fetch($sql, [$licenseId, BOT_OPERATION_TYPE, $startDate]);
+        $summary = $db->queryOne($sql, [$licenseId, BOT_OPERATION_TYPE, $startDate]);
 
         // Obtener datos diarios
         $sqlDaily = "SELECT
@@ -127,7 +127,7 @@ class BotTokenManager {
                     GROUP BY DATE(created_at)
                     ORDER BY date DESC";
 
-        $daily = $db->fetchAll($sqlDaily, [$licenseId, BOT_OPERATION_TYPE, $startDate]);
+        $daily = $db->query($sqlDaily, [$licenseId, BOT_OPERATION_TYPE, $startDate]);
 
         return [
             'period' => [
