@@ -607,73 +607,140 @@ PHSBOT_DEF;
               <!-- Sección: Posición y Tamaño -->
               <div class="phsbot-section">
                 <h2 class="phsbot-section-title">Posición y Tamaño</h2>
-                
+
+                <div class="phsbot-field">
+                  <label class="phsbot-label">Posición del Chat</label>
+                  <input type="hidden" name="chat_position" id="chat_position" value="<?php echo esc_attr($chat_position);?>">
+                  <div class="phsbot-position-selector" style="display: flex; justify-content: center; margin: 16px 0;">
+                    <div style="position: relative; width: 280px; height: 180px; background: linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%); border-radius: 8px; border: 3px solid #ccc; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                      <!-- Esquina superior izquierda -->
+                      <button type="button" class="phsbot-pos-btn" data-pos="top-left"
+                              style="position: absolute; top: 8px; left: 8px; width: 40px; height: 40px; border-radius: 8px; border: 2px solid #000; background: <?php echo $chat_position === 'top-left' ? '#000' : '#fff'; ?>; cursor: pointer; transition: all 0.2s;"
+                              title="Superior izquierda">
+                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: <?php echo $chat_position === 'top-left' ? '#fff' : '#000'; ?>;">
+                          <path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H4V4h16v16z"/>
+                          <circle cx="8" cy="8" r="2"/>
+                        </svg>
+                      </button>
+
+                      <!-- Esquina superior derecha -->
+                      <button type="button" class="phsbot-pos-btn" data-pos="top-right"
+                              style="position: absolute; top: 8px; right: 8px; width: 40px; height: 40px; border-radius: 8px; border: 2px solid #000; background: <?php echo $chat_position === 'top-right' ? '#000' : '#fff'; ?>; cursor: pointer; transition: all 0.2s;"
+                              title="Superior derecha">
+                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: <?php echo $chat_position === 'top-right' ? '#fff' : '#000'; ?>;">
+                          <path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H4V4h16v16z"/>
+                          <circle cx="16" cy="8" r="2"/>
+                        </svg>
+                      </button>
+
+                      <!-- Esquina inferior izquierda -->
+                      <button type="button" class="phsbot-pos-btn" data-pos="bottom-left"
+                              style="position: absolute; bottom: 8px; left: 8px; width: 40px; height: 40px; border-radius: 8px; border: 2px solid #000; background: <?php echo $chat_position === 'bottom-left' ? '#000' : '#fff'; ?>; cursor: pointer; transition: all 0.2s;"
+                              title="Inferior izquierda">
+                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: <?php echo $chat_position === 'bottom-left' ? '#fff' : '#000'; ?>;">
+                          <path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H4V4h16v16z"/>
+                          <circle cx="8" cy="16" r="2"/>
+                        </svg>
+                      </button>
+
+                      <!-- Esquina inferior derecha -->
+                      <button type="button" class="phsbot-pos-btn" data-pos="bottom-right"
+                              style="position: absolute; bottom: 8px; right: 8px; width: 40px; height: 40px; border-radius: 8px; border: 2px solid #000; background: <?php echo $chat_position === 'bottom-right' ? '#000' : '#fff'; ?>; cursor: pointer; transition: all 0.2s;"
+                              title="Inferior derecha">
+                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: <?php echo $chat_position === 'bottom-right' ? '#fff' : '#000'; ?>;">
+                          <path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H4V4h16v16z"/>
+                          <circle cx="16" cy="16" r="2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <script>
+                  (function(){
+                    var btns = document.querySelectorAll('.phsbot-pos-btn');
+                    var input = document.getElementById('chat_position');
+                    btns.forEach(function(btn){
+                      btn.addEventListener('click', function(e){
+                        e.preventDefault();
+                        var pos = this.getAttribute('data-pos');
+                        input.value = pos;
+                        // Actualizar estilos
+                        btns.forEach(function(b){
+                          b.style.background = '#fff';
+                          b.querySelector('svg').style.fill = '#000';
+                        });
+                        this.style.background = '#000';
+                        this.querySelector('svg').style.fill = '#fff';
+                        // Actualizar preview si existe
+                        var preview = document.getElementById('phsbot-preview');
+                        if(preview) preview.setAttribute('data-pos', pos);
+                      });
+                    });
+                  })();
+                  </script>
+                </div>
+
                 <div class="phsbot-grid-2">
                   <div class="phsbot-field">
-                    <label class="phsbot-label" for="chat_position">Posición</label>
-                    <select name="chat_position" id="chat_position" class="phsbot-select-field">
-                      <option value="bottom-right" <?php selected($chat_position,'bottom-right');?>>Inferior derecha</option>
-                      <option value="bottom-left"  <?php selected($chat_position,'bottom-left');?>>Inferior izquierda</option>
-                      <option value="top-right"    <?php selected($chat_position,'top-right');?>>Superior derecha</option>
-                      <option value="top-left"     <?php selected($chat_position,'top-left');?>>Superior izquierda</option>
-                    </select>
+                    <label class="phsbot-label" for="chat_title">Título cabecera</label>
+                    <input type="text"
+                           name="chat_title"
+                           id="chat_title"
+                           class="phsbot-input-field"
+                           value="<?php echo esc_attr($chat_title); ?>"
+                           placeholder="PHSBot">
                   </div>
 
                   <div class="phsbot-field">
-                    <label class="phsbot-label" for="chat_title">Título cabecera</label>
-                    <input type="text" 
-                           name="chat_title" 
-                           id="chat_title" 
-                           class="phsbot-input-field" 
-                           value="<?php echo esc_attr($chat_title); ?>" 
-                           placeholder="PHSBot">
+                    <label class="phsbot-label">Tamaño de fuente: <span id="bubble_font_size_val"><?php echo esc_html($bubble_font_size); ?> px</span></label>
+                    <input type="range"
+                           id="bubble_font_size"
+                           name="bubble_font_size"
+                           min="12"
+                           max="22"
+                           step="1"
+                           value="<?php echo esc_attr($bubble_font_size); ?>"
+                           style="width: 100%;">
                   </div>
                 </div>
 
                 <div class="phsbot-grid-2">
                   <div class="phsbot-field">
                     <label class="phsbot-label">Ancho: <span id="chat_width_val"><?php echo esc_html($w_px);?> px</span></label>
-                    <input type="range" 
-                           id="chat_width_slider" 
-                           min="260" 
-                           max="920" 
-                           step="2" 
-                           value="<?php echo esc_attr($w_px);?>" 
+                    <input type="range"
+                           id="chat_width_slider"
+                           min="260"
+                           max="920"
+                           step="2"
+                           value="<?php echo esc_attr($w_px);?>"
                            style="width: 100%;">
                     <input type="hidden" id="chat_width" name="chat_width" value="<?php echo esc_attr($w_px.'px');?>">
                   </div>
 
                   <div class="phsbot-field">
                     <label class="phsbot-label">Alto: <span id="chat_height_val"><?php echo esc_html($h_px);?> px</span></label>
-                    <input type="range" 
-                           id="chat_height_slider" 
-                           min="420" 
-                           max="960" 
-                           step="2" 
-                           value="<?php echo esc_attr($h_px);?>" 
+                    <input type="range"
+                           id="chat_height_slider"
+                           min="420"
+                           max="960"
+                           step="2"
+                           value="<?php echo esc_attr($h_px);?>"
                            style="width: 100%;">
                     <input type="hidden" id="chat_height" name="chat_height" value="<?php echo esc_attr($h_px.'px');?>">
                   </div>
-                </div>
-
-                <div class="phsbot-field">
-                  <label class="phsbot-label">Tamaño de fuente: <span id="bubble_font_size_val"><?php echo esc_html($bubble_font_size); ?> px</span></label>
-                  <input type="range" 
-                         id="bubble_font_size" 
-                         name="bubble_font_size" 
-                         min="12" 
-                         max="22" 
-                         step="1" 
-                         value="<?php echo esc_attr($bubble_font_size); ?>" 
-                         style="width: 100%;">
                 </div>
               </div>
 
               <!-- Sección: Colores -->
               <div class="phsbot-section" style="margin-top: 32px;">
                 <h2 class="phsbot-section-title">Colores</h2>
-                
-                <div class="phsbot-grid-2">
+
+                <!-- Mantener campos ocultos para compatibilidad backend -->
+                <input type="hidden" name="color_whatsapp" value="<?php echo esc_attr($color_whatsapp);?>">
+                <input type="hidden" name="btn_height" value="<?php echo esc_attr($btn_height);?>">
+                <input type="hidden" name="head_btn_size" value="<?php echo esc_attr($head_btn_size);?>">
+                <input type="hidden" name="mic_stroke_w" value="<?php echo esc_attr($mic_stroke_w);?>">
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
                   <div class="phsbot-field">
                     <label class="phsbot-label">Color Primario (Cabecera)</label>
                     <input type="text" name="color_primary" class="phsbot-color phsbot-input-field" value="<?php echo esc_attr($color_primary);?>">
@@ -705,56 +772,8 @@ PHSBOT_DEF;
                   </div>
 
                   <div class="phsbot-field">
-                    <label class="phsbot-label">WhatsApp</label>
-                    <input type="text" name="color_whatsapp" class="phsbot-color phsbot-input-field" value="<?php echo esc_attr($color_whatsapp);?>">
-                  </div>
-
-                  <div class="phsbot-field">
                     <label class="phsbot-label">Color Footer (opcional)</label>
                     <input type="text" name="color_footer" class="phsbot-color phsbot-input-field" value="<?php echo esc_attr($color_footer_saved);?>">
-                  </div>
-                </div>
-              </div>
-
-              <!-- Sección: Controles Avanzados -->
-              <div class="phsbot-section" style="margin-top: 32px;">
-                <h2 class="phsbot-section-title">Controles Avanzados</h2>
-                
-                <div class="phsbot-grid-2">
-                  <div class="phsbot-field">
-                    <label class="phsbot-label">Altura Botón: <span id="btn_height_val"><?php echo esc_html($btn_height); ?> px</span></label>
-                    <input type="range" 
-                           id="btn_height" 
-                           name="btn_height" 
-                           min="36" 
-                           max="56" 
-                           step="2" 
-                           value="<?php echo esc_attr($btn_height); ?>" 
-                           style="width: 100%;">
-                  </div>
-
-                  <div class="phsbot-field">
-                    <label class="phsbot-label">Tamaño Iconos: <span id="head_btn_size_val"><?php echo esc_html($head_btn_size); ?> px</span></label>
-                    <input type="range" 
-                           id="head_btn_size" 
-                           name="head_btn_size" 
-                           min="20" 
-                           max="34" 
-                           step="2" 
-                           value="<?php echo esc_attr($head_btn_size); ?>" 
-                           style="width: 100%;">
-                  </div>
-
-                  <div class="phsbot-field">
-                    <label class="phsbot-label">Grosor Micrófono: <span id="mic_stroke_w_val"><?php echo esc_html($mic_stroke_w); ?> px</span></label>
-                    <input type="range" 
-                           id="mic_stroke_w" 
-                           name="mic_stroke_w" 
-                           min="1" 
-                           max="3" 
-                           step="1" 
-                           value="<?php echo esc_attr($mic_stroke_w); ?>" 
-                           style="width: 100%;">
                   </div>
                 </div>
               </div>
