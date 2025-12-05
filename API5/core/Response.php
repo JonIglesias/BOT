@@ -25,12 +25,18 @@ class Response {
      */
     public static function error($message, $statusCode = 400, $additionalData = []) {
         http_response_code($statusCode);
+
+        // Convert string to array if needed (for backward compatibility)
+        if (is_string($additionalData)) {
+            $additionalData = ['error_code' => $additionalData];
+        }
+
         echo json_encode([
             'success' => false,
             'error' => array_merge([
                 'message' => $message,
                 'code' => self::getErrorCode($statusCode)
-            ], $additionalData)
+            ], is_array($additionalData) ? $additionalData : [])
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         exit;
     }
