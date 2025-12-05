@@ -136,12 +136,16 @@ jQuery(function($){
     $btn.prop('disabled', true).text('Validando...');
     $status.html('<div class="notice notice-info inline"><p>🔄 Validando licencia...</p></div>');
 
-    // Construir URL de validación
-    var validateUrl = apiUrl.replace(/\/+$/, '') + '?route=bot/validate&license_key=' + encodeURIComponent(licenseKey) + '&domain=' + encodeURIComponent(domain);
+    // Construir URL de validación (usando GET con parámetros)
+    var validateUrl = apiUrl.replace(/\/+$/, '') + '?route=bot/validate';
 
     $.ajax({
       url: validateUrl,
       method: 'GET',
+      data: {
+        license_key: licenseKey,
+        domain: domain
+      },
       timeout: 10000,
       success: function(response){
         if (response && response.success && response.data && response.data.valid) {
@@ -185,5 +189,11 @@ jQuery(function($){
         $btn.prop('disabled', false).text('Validar Licencia');
       }
     });
+  });
+
+  // Limpiar el div de status antes de submit del formulario para evitar problemas
+  $('.phsbot-config-form').on('submit', function() {
+    // Vaciar el div de status para reducir el tamaño del DOM antes del submit
+    $('#phsbot-license-status').empty();
   });
 });
