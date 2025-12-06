@@ -209,6 +209,13 @@ if ($module !== 'dashboard') {
                         </div>
                     </div>
 
+                    <?php
+                    // DEBUG: Confirmar que llegamos aquí
+                    echo "\n<!-- DEBUG CHECKPOINT 1: After header -->\n";
+                    echo "<div style='position: fixed; top: 100px; right: 10px; background: red; color: white; padding: 10px; z-index: 9999;'>CHECKPOINT 1 REACHED</div>\n";
+                    flush();
+                    ?>
+
                     <div class="module-content">
                         <?php
                         echo "<!-- DEBUG: About to include module -->\n";
