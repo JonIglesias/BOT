@@ -92,8 +92,14 @@ try {
 
         // No hacer redirect, mostrar mensaje de éxito directamente
         $success = '✅ Configuración guardada correctamente.';
+
+        // Debug: Confirmar que llegamos aquí después del POST
+        error_log("Settings POST completed successfully");
     }
-    
+
+    // Debug: Punto de lectura de settings
+    error_log("Reading settings from DB");
+
     // Leer todos los settings de BD
     $stmt = $db->prepare("SELECT setting_key, setting_value, setting_type FROM " . DB_PREFIX . "settings WHERE setting_key IN (
         'openai_api_key',
@@ -161,7 +167,11 @@ try {
     $bot_ai_tone = 'profesional';
     $bot_ai_max_history = '10';
     $availableModels = ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-5', 'gpt-5-mini'];
+    error_log("[SETTINGS] Exception caught, using defaults");
 }
+
+// Debug: About to render HTML
+error_log("[SETTINGS] About to render HTML. Success: " . ($success ? 'YES' : 'NO') . ", Error: " . ($error ? 'YES' : 'NO'));
 
 // Helper function para sanitización si no existe
 if (!function_exists('sanitize_text_field')) {

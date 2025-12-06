@@ -56,4 +56,11 @@ class Logger {
     public static function warning($message, $context = []) {
         self::api('WARNING', $message, $context);
     }
+
+    /**
+     * Log sync event
+     */
+    public static function sync($level, $message, $context = []) {
+        self::api(strtoupper($level), '[SYNC] ' . $message, $context);
+    }
 }
