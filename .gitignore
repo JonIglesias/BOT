@@ -1,0 +1,25 @@
+# Logs
+*.log
+API5/logs/*.log
+API5/logs/*.json
+API5/logs/cron_status.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Temporary files
+*.tmp
+*.bak
+*.old

@@ -209,44 +209,15 @@ if ($module !== 'dashboard') {
                         </div>
                     </div>
 
-                    <?php
-                    // DEBUG: Confirmar que llegamos aquí
-                    echo "\n<!-- DEBUG CHECKPOINT 1: After header -->\n";
-                    echo "<div style='position: fixed; top: 100px; right: 10px; background: red; color: white; padding: 10px; z-index: 9999;'>CHECKPOINT 1 REACHED</div>\n";
-                    flush();
-                    ?>
-
                     <div class="module-content">
                         <?php
-                        echo "<!-- DEBUG: About to include module -->\n";
-                        echo "<div style='background: yellow; padding: 10px; margin: 10px;'>DEBUG: Module path: " . htmlspecialchars($modulePath) . "</div>\n";
-
-                        if (!file_exists($modulePath)) {
-                            echo "<div style='background: red; color: white; padding: 20px;'>ERROR: Module file does not exist!</div>";
+                        if (file_exists($modulePath)) {
+                            include $modulePath;
                         } else {
-                            echo "<div style='background: lightblue; padding: 10px;'>File exists, including now...</div>\n";
-
-                            try {
-                                ob_start();
-                                include $modulePath;
-                                $moduleOutput = ob_get_clean();
-
-                                if (empty($moduleOutput)) {
-                                    echo "<div style='background: orange; padding: 20px; color: white;'>";
-                                    echo "<h2>⚠️ WARNING: Module produced NO output!</h2>";
-                                    echo "<p>The file was included but generated empty content.</p>";
-                                    echo "<p>Check for exit/die statements or PHP errors.</p>";
-                                    echo "</div>";
-                                } else {
-                                    echo $moduleOutput;
-                                }
-                            } catch (Exception $e) {
-                                echo "<div style='background: red; color: white; padding: 20px;'>";
-                                echo "<h2>ERROR including module:</h2>";
-                                echo "<p>" . htmlspecialchars($e->getMessage()) . "</p>";
-                                echo "<pre>" . htmlspecialchars($e->getTraceAsString()) . "</pre>";
-                                echo "</div>";
-                            }
+                            echo "<div style='background: #f8d7da; color: #721c24; padding: 20px; border-radius: 5px;'>";
+                            echo "<h2>Módulo no encontrado</h2>";
+                            echo "<p>El archivo no existe en la ruta especificada.</p>";
+                            echo "</div>";
                         }
                         ?>
                     </div>
