@@ -6,6 +6,125 @@
 $success = '';
 $error = '';
 
+// Función para sincronizar precios desde OpenAI
+function syncOpenAIPrices($db) {
+    try {
+        // Obtener API key
+        $stmt = $db->prepare("SELECT setting_value FROM " . DB_PREFIX . "settings WHERE setting_key = 'openai_api_key' LIMIT 1");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $apiKey = $result['setting_value'] ?? '';
+
+        if (empty($apiKey)) {
+            return ['success' => false, 'error' => 'API Key de OpenAI no configurada'];
+        }
+
+        // Consultar modelos desde OpenAI
+        $ch = curl_init('https://api.openai.com/v1/models');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . $apiKey,
+                'Content-Type: application/json'
+            ],
+            CURLOPT_TIMEOUT => 10
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            return ['success' => false, 'error' => 'Error al consultar OpenAI API (HTTP ' . $httpCode . ')'];
+        }
+
+        $data = json_decode($response, true);
+        if (!isset($data['data'])) {
+            return ['success' => false, 'error' => 'Respuesta inválida de OpenAI'];
+        }
+
+        // Precios conocidos de OpenAI (Diciembre 2024)
+        $knownPrices = [
+            'gpt-4o' => ['input' => 0.0025, 'output' => 0.01],
+            'gpt-4o-2024-11-20' => ['input' => 0.0025, 'output' => 0.01],
+            'gpt-4o-2024-08-06' => ['input' => 0.0025, 'output' => 0.01],
+            'gpt-4o-2024-05-13' => ['input' => 0.005, 'output' => 0.015],
+            'gpt-4o-mini' => ['input' => 0.00015, 'output' => 0.0006],
+            'gpt-4o-mini-2024-07-18' => ['input' => 0.00015, 'output' => 0.0006],
+            'gpt-4-turbo' => ['input' => 0.01, 'output' => 0.03],
+            'gpt-4-turbo-2024-04-09' => ['input' => 0.01, 'output' => 0.03],
+            'gpt-4' => ['input' => 0.03, 'output' => 0.06],
+            'gpt-4-0613' => ['input' => 0.03, 'output' => 0.06],
+            'gpt-3.5-turbo' => ['input' => 0.0005, 'output' => 0.0015],
+            'gpt-3.5-turbo-0125' => ['input' => 0.0005, 'output' => 0.0015],
+            'chatgpt-4o-latest' => ['input' => 0.005, 'output' => 0.015],
+            'o1' => ['input' => 0.015, 'output' => 0.06],
+            'o1-preview' => ['input' => 0.015, 'output' => 0.06],
+            'o1-mini' => ['input' => 0.003, 'output' => 0.012]
+        ];
+
+        $updated = 0;
+        $added = 0;
+
+        foreach ($data['data'] as $model) {
+            $modelId = $model['id'];
+
+            // Solo procesar modelos GPT y O1
+            if (!preg_match('/^(gpt-|o1|chatgpt)/i', $modelId)) {
+                continue;
+            }
+
+            // Buscar precio conocido
+            $prices = null;
+            if (isset($knownPrices[$modelId])) {
+                $prices = $knownPrices[$modelId];
+            } else {
+                // Intentar detectar familia
+                foreach ($knownPrices as $knownModel => $knownPrice) {
+                    if (strpos($modelId, $knownModel) === 0) {
+                        $prices = $knownPrice;
+                        break;
+                    }
+                }
+            }
+
+            if (!$prices) {
+                continue; // Saltar modelos sin precio conocido
+            }
+
+            // Verificar si el modelo ya existe
+            $stmt = $db->prepare("SELECT id FROM " . DB_PREFIX . "model_prices WHERE model_name = ? LIMIT 1");
+            $stmt->execute([$modelId]);
+            $exists = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($exists) {
+                // Actualizar precio existente
+                $stmt = $db->prepare("UPDATE " . DB_PREFIX . "model_prices
+                    SET price_input_per_1k = ?, price_output_per_1k = ?, source = 'openai_api_sync', updated_at = NOW()
+                    WHERE model_name = ? AND is_active = 1");
+                $stmt->execute([$prices['input'], $prices['output'], $modelId]);
+                $updated++;
+            } else {
+                // Insertar nuevo modelo
+                $stmt = $db->prepare("INSERT INTO " . DB_PREFIX . "model_prices
+                    (model_name, price_input_per_1k, price_output_per_1k, source, notes, is_active, updated_at)
+                    VALUES (?, ?, ?, 'openai_api_sync', 'Auto-importado desde OpenAI API', 1, NOW())");
+                $stmt->execute([$modelId, $prices['input'], $prices['output']]);
+                $added++;
+            }
+        }
+
+        return [
+            'success' => true,
+            'updated' => $updated,
+            'added' => $added
+        ];
+
+    } catch (Exception $e) {
+        return ['success' => false, 'error' => $e->getMessage()];
+    }
+}
+
 // Obtener conexión a BD
 try {
     $db = Database::getInstance();
@@ -81,125 +200,6 @@ try {
                     // No hacer redirect, mostrar mensaje directamente
                     break;
             }
-        }
-    }
-
-    // Función para sincronizar precios desde OpenAI
-    function syncOpenAIPrices($db) {
-        try {
-            // Obtener API key
-            $stmt = $db->prepare("SELECT setting_value FROM " . DB_PREFIX . "settings WHERE setting_key = 'openai_api_key' LIMIT 1");
-            $stmt->execute();
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            $apiKey = $result['setting_value'] ?? '';
-
-            if (empty($apiKey)) {
-                return ['success' => false, 'error' => 'API Key de OpenAI no configurada'];
-            }
-
-            // Consultar modelos desde OpenAI
-            $ch = curl_init('https://api.openai.com/v1/models');
-            curl_setopt_array($ch, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_HTTPHEADER => [
-                    'Authorization: Bearer ' . $apiKey,
-                    'Content-Type: application/json'
-                ],
-                CURLOPT_TIMEOUT => 10
-            ]);
-
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            if ($httpCode !== 200) {
-                return ['success' => false, 'error' => 'Error al consultar OpenAI API (HTTP ' . $httpCode . ')'];
-            }
-
-            $data = json_decode($response, true);
-            if (!isset($data['data'])) {
-                return ['success' => false, 'error' => 'Respuesta inválida de OpenAI'];
-            }
-
-            // Precios conocidos de OpenAI (Diciembre 2024)
-            $knownPrices = [
-                'gpt-4o' => ['input' => 0.0025, 'output' => 0.01],
-                'gpt-4o-2024-11-20' => ['input' => 0.0025, 'output' => 0.01],
-                'gpt-4o-2024-08-06' => ['input' => 0.0025, 'output' => 0.01],
-                'gpt-4o-2024-05-13' => ['input' => 0.005, 'output' => 0.015],
-                'gpt-4o-mini' => ['input' => 0.00015, 'output' => 0.0006],
-                'gpt-4o-mini-2024-07-18' => ['input' => 0.00015, 'output' => 0.0006],
-                'gpt-4-turbo' => ['input' => 0.01, 'output' => 0.03],
-                'gpt-4-turbo-2024-04-09' => ['input' => 0.01, 'output' => 0.03],
-                'gpt-4' => ['input' => 0.03, 'output' => 0.06],
-                'gpt-4-0613' => ['input' => 0.03, 'output' => 0.06],
-                'gpt-3.5-turbo' => ['input' => 0.0005, 'output' => 0.0015],
-                'gpt-3.5-turbo-0125' => ['input' => 0.0005, 'output' => 0.0015],
-                'chatgpt-4o-latest' => ['input' => 0.005, 'output' => 0.015],
-                'o1' => ['input' => 0.015, 'output' => 0.06],
-                'o1-preview' => ['input' => 0.015, 'output' => 0.06],
-                'o1-mini' => ['input' => 0.003, 'output' => 0.012]
-            ];
-
-            $updated = 0;
-            $added = 0;
-
-            foreach ($data['data'] as $model) {
-                $modelId = $model['id'];
-
-                // Solo procesar modelos GPT y O1
-                if (!preg_match('/^(gpt-|o1|chatgpt)/i', $modelId)) {
-                    continue;
-                }
-
-                // Buscar precio conocido
-                $prices = null;
-                if (isset($knownPrices[$modelId])) {
-                    $prices = $knownPrices[$modelId];
-                } else {
-                    // Intentar detectar familia
-                    foreach ($knownPrices as $knownModel => $knownPrice) {
-                        if (strpos($modelId, $knownModel) === 0) {
-                            $prices = $knownPrice;
-                            break;
-                        }
-                    }
-                }
-
-                if (!$prices) {
-                    continue; // Saltar modelos sin precio conocido
-                }
-
-                // Verificar si el modelo ya existe
-                $stmt = $db->prepare("SELECT id FROM " . DB_PREFIX . "model_prices WHERE model_name = ? LIMIT 1");
-                $stmt->execute([$modelId]);
-                $exists = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                if ($exists) {
-                    // Actualizar precio existente
-                    $stmt = $db->prepare("UPDATE " . DB_PREFIX . "model_prices
-                        SET price_input_per_1k = ?, price_output_per_1k = ?, source = 'openai_api_sync', updated_at = NOW()
-                        WHERE model_name = ? AND is_active = 1");
-                    $stmt->execute([$prices['input'], $prices['output'], $modelId]);
-                    $updated++;
-                } else {
-                    // Insertar nuevo modelo
-                    $stmt = $db->prepare("INSERT INTO " . DB_PREFIX . "model_prices
-                        (model_name, price_input_per_1k, price_output_per_1k, source, notes, is_active, updated_at)
-                        VALUES (?, ?, ?, 'openai_api_sync', 'Auto-importado desde OpenAI API', 1, NOW())");
-                    $stmt->execute([$modelId, $prices['input'], $prices['output']]);
-                    $added++;
-                }
-            }
-
-            return [
-                'success' => true,
-                'updated' => $updated,
-                'added' => $added
-            ];
-
-        } catch (Exception $e) {
-            return ['success' => false, 'error' => $e->getMessage()];
         }
     }
 
