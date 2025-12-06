@@ -208,9 +208,40 @@ if ($module !== 'dashboard') {
                             <a href="logout.php" class="btn-logout">Cerrar Sesión</a>
                         </div>
                     </div>
-                    
+
                     <div class="module-content">
-                        <?php include $modulePath; ?>
+                        <?php
+                        echo "<!-- DEBUG: About to include module -->\n";
+                        echo "<div style='background: yellow; padding: 10px; margin: 10px;'>DEBUG: Module path: " . htmlspecialchars($modulePath) . "</div>\n";
+
+                        if (!file_exists($modulePath)) {
+                            echo "<div style='background: red; color: white; padding: 20px;'>ERROR: Module file does not exist!</div>";
+                        } else {
+                            echo "<div style='background: lightblue; padding: 10px;'>File exists, including now...</div>\n";
+
+                            try {
+                                ob_start();
+                                include $modulePath;
+                                $moduleOutput = ob_get_clean();
+
+                                if (empty($moduleOutput)) {
+                                    echo "<div style='background: orange; padding: 20px; color: white;'>";
+                                    echo "<h2>⚠️ WARNING: Module produced NO output!</h2>";
+                                    echo "<p>The file was included but generated empty content.</p>";
+                                    echo "<p>Check for exit/die statements or PHP errors.</p>";
+                                    echo "</div>";
+                                } else {
+                                    echo $moduleOutput;
+                                }
+                            } catch (Exception $e) {
+                                echo "<div style='background: red; color: white; padding: 20px;'>";
+                                echo "<h2>ERROR including module:</h2>";
+                                echo "<p>" . htmlspecialchars($e->getMessage()) . "</p>";
+                                echo "<pre>" . htmlspecialchars($e->getTraceAsString()) . "</pre>";
+                                echo "</div>";
+                            }
+                        }
+                        ?>
                     </div>
                 </main>
             </div>
