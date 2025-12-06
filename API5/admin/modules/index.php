@@ -28,6 +28,10 @@ if (!in_array($module, $validModules)) {
 if ($module !== 'dashboard') {
     $modulePath = __DIR__ . '/modules/' . $module . '/index.php';
     if (file_exists($modulePath)) {
+        // Habilitar error display para debugging
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
         // Cargar el módulo en un wrapper con sidebar
         ?>
         <!DOCTYPE html>
