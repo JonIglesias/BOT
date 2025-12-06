@@ -92,8 +92,14 @@ try {
 
         // No hacer redirect, mostrar mensaje de éxito directamente
         $success = '✅ Configuración guardada correctamente.';
+
+        // Debug: Confirmar que llegamos aquí después del POST
+        error_log("Settings POST completed successfully");
     }
-    
+
+    // Debug: Punto de lectura de settings
+    error_log("Reading settings from DB");
+
     // Leer todos los settings de BD
     $stmt = $db->prepare("SELECT setting_key, setting_value, setting_type FROM " . DB_PREFIX . "settings WHERE setting_key IN (
         'openai_api_key',
