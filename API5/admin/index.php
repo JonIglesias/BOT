@@ -344,9 +344,33 @@ try {
             <?php else: ?>
                 <!-- Cargar módulo -->
                 <?php
+                error_reporting(E_ALL);
+                ini_set('display_errors', 1);
+
                 $modulePath = __DIR__ . '/modules/' . $module . '/index.php';
+
+                echo "<div style='background: yellow; padding: 10px; margin: 10px;'>";
+                echo "DEBUG: Loading module: " . htmlspecialchars($module) . "<br>";
+                echo "Path: " . htmlspecialchars($modulePath) . "<br>";
+                echo "Exists: " . (file_exists($modulePath) ? 'YES' : 'NO');
+                echo "</div>";
+
                 if (file_exists($modulePath)) {
+                    echo "<div style='background: lightblue; padding: 10px; margin: 10px;'>About to include module...</div>";
+
+                    ob_start();
                     include $modulePath;
+                    $output = ob_get_clean();
+
+                    if (empty($output)) {
+                        echo "<div style='background: red; color: white; padding: 20px; margin: 10px;'>";
+                        echo "<h2>⚠️ Module generated NO output!</h2>";
+                        echo "<p>File was included but produced nothing.</p>";
+                        echo "<p>Check for PHP errors or exit statements in the module.</p>";
+                        echo "</div>";
+                    } else {
+                        echo $output;
+                    }
                 } else {
                     ?>
                     <div class="content-section">
