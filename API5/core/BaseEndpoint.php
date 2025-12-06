@@ -52,47 +52,64 @@ abstract class BaseEndpoint {
             Response::error('domain is required', 400);
         }
 
-        // Buscar licencia
-        $licenseModel = new License();
-        $license = $licenseModel->findByKey($licenseKey);
+        try {
+            // Buscar licencia
+            $licenseModel = new License();
+            $license = $licenseModel->findByKey($licenseKey);
 
-        if (!$license) {
-            Response::error('Invalid license key', 401);
+            if (!$license) {
+                Response::error('Invalid license key', 401);
+            }
+
+            // Verificar estado
+            if ($license['status'] !== 'active') {
+                Response::error('License is not active', 401);
+            }
+
+            // Verificar dominio
+            $licenseDomain = rtrim(str_replace(['http://', 'https://', 'www.'], '', $license['domain']), '/');
+            $requestDomain = rtrim(str_replace(['http://', 'https://', 'www.'], '', $domain), '/');
+
+            if ($licenseDomain !== $requestDomain) {
+                Response::error('Domain mismatch', 401);
+            }
+
+            // Verificar que es licencia GEO
+            $planId = $license['plan_id'] ?? '';
+            if (!preg_match('/^GEO/i', $planId)) {
+                Response::error('This license is not for GeoWriter product', 401);
+            }
+
+            // Verificar tokens disponibles
+            $tokensUsed = $license['tokens_used_this_period'] ?? 0;
+            $tokensLimit = $license['tokens_limit'] ?? 0;
+
+            if ($tokensLimit > 0 && $tokensUsed >= $tokensLimit) {
+                Response::error('Token limit exceeded for this period', 402, [
+                    'tokens_used' => $tokensUsed,
+                    'tokens_limit' => $tokensLimit,
+                    'period_ends_at' => $license['period_ends_at'] ?? null
+                ]);
+            }
+
+            $this->license = $license;
+            return $license;
+        } catch (PDOException $e) {
+            // Log database error
+            if (class_exists('Logger')) {
+                Logger::error('Database error in validateLicense', [
+                    'error' => $e->getMessage(),
+                    'license_key' => substr($licenseKey, 0, 8) . '...'
+                ]);
+            } else {
+                error_log('Database error in validateLicense: ' . $e->getMessage());
+            }
+            Response::error('Database error occurred', 500);
+        } catch (Exception $e) {
+            // Log general error
+            error_log('Error in validateLicense: ' . $e->getMessage());
+            Response::error('An error occurred while validating license', 500);
         }
-
-        // Verificar estado
-        if ($license['status'] !== 'active') {
-            Response::error('License is not active', 401);
-        }
-
-        // Verificar dominio
-        $licenseDomain = rtrim(str_replace(['http://', 'https://', 'www.'], '', $license['domain']), '/');
-        $requestDomain = rtrim(str_replace(['http://', 'https://', 'www.'], '', $domain), '/');
-
-        if ($licenseDomain !== $requestDomain) {
-            Response::error('Domain mismatch', 401);
-        }
-
-        // Verificar que es licencia GEO
-        $planId = $license['plan_id'] ?? '';
-        if (!preg_match('/^GEO/i', $planId)) {
-            Response::error('This license is not for GeoWriter product', 401);
-        }
-
-        // Verificar tokens disponibles
-        $tokensUsed = $license['tokens_used_this_period'] ?? 0;
-        $tokensLimit = $license['tokens_limit'] ?? 0;
-
-        if ($tokensLimit > 0 && $tokensUsed >= $tokensLimit) {
-            Response::error('Token limit exceeded for this period', 402, [
-                'tokens_used' => $tokensUsed,
-                'tokens_limit' => $tokensLimit,
-                'period_ends_at' => $license['period_ends_at'] ?? null
-            ]);
-        }
-
-        $this->license = $license;
-        return $license;
     }
 
     /**
@@ -105,48 +122,65 @@ abstract class BaseEndpoint {
             return false;
         }
 
-        // Obtener datos de uso de OpenAI
-        $usage = $openaiResult['usage'] ?? [];
-        $tokensInput = $usage['prompt_tokens'] ?? 0;
-        $tokensOutput = $usage['completion_tokens'] ?? 0;
-        $tokensTotal = $usage['total_tokens'] ?? ($tokensInput + $tokensOutput);
+        try {
+            // Obtener datos de uso de OpenAI
+            $usage = $openaiResult['usage'] ?? [];
+            $tokensInput = $usage['prompt_tokens'] ?? 0;
+            $tokensOutput = $usage['completion_tokens'] ?? 0;
+            $tokensTotal = $usage['total_tokens'] ?? ($tokensInput + $tokensOutput);
 
-        // ⭐ CRÍTICO: Obtener el modelo REAL usado por OpenAI
-        // OpenAI devuelve el modelo exacto usado en la respuesta
-        $modelUsed = $openaiResult['model'] ?? OPENAI_MODEL;
+            // ⭐ CRÍTICO: Obtener el modelo REAL usado por OpenAI
+            // OpenAI devuelve el modelo exacto usado en la respuesta
+            $modelUsed = $openaiResult['model'] ?? OPENAI_MODEL;
 
-        // Incrementar tokens en la licencia
-        $licenseModel = new License();
-        $licenseModel->incrementTokens($this->license['id'], $tokensTotal);
+            // Incrementar tokens en la licencia
+            $licenseModel = new License();
+            $licenseModel->incrementTokens($this->license['id'], $tokensTotal);
 
-        // Registrar en usage_tracking con el modelo correcto
-        // UsageTracking calculará el precio desde api_model_prices
-        $trackingData = [
-            'license_id' => $this->license['id'],
-            'operation_type' => $operationType,
-            'tokens_input' => $tokensInput,
-            'tokens_output' => $tokensOutput,
-            'tokens_total' => $tokensTotal,
-            'model' => $modelUsed,  // ⭐ El modelo REAL usado
-            'sync_status_at_time' => 'fresh'
-        ];
+            // Registrar en usage_tracking con el modelo correcto
+            // UsageTracking calculará el precio desde api_model_prices
+            $trackingData = [
+                'license_id' => $this->license['id'],
+                'operation_type' => $operationType,
+                'tokens_input' => $tokensInput,
+                'tokens_output' => $tokensOutput,
+                'tokens_total' => $tokensTotal,
+                'model' => $modelUsed,  // ⭐ El modelo REAL usado
+                'sync_status_at_time' => 'fresh'
+            ];
 
-        // Si hay campaign_id en params, incluirlo
-        if (isset($this->params['campaign_id'])) {
-            $trackingData['campaign_id'] = $this->params['campaign_id'];
+            // Si hay campaign_id en params, incluirlo
+            if (isset($this->params['campaign_id'])) {
+                $trackingData['campaign_id'] = $this->params['campaign_id'];
+            }
+
+            if (isset($this->params['campaign_name'])) {
+                $trackingData['campaign_name'] = $this->params['campaign_name'];
+            }
+
+            if (isset($this->params['batch_id'])) {
+                $trackingData['batch_id'] = $this->params['batch_id'];
+                $trackingData['batch_type'] = 'queue';
+            }
+
+            $usageTracking = new UsageTracking();
+            return $usageTracking->track($trackingData);
+        } catch (PDOException $e) {
+            // Log database error but don't fail the request
+            if (class_exists('Logger')) {
+                Logger::error('Database error in trackUsage', [
+                    'error' => $e->getMessage(),
+                    'operation' => $operationType
+                ]);
+            } else {
+                error_log('Database error in trackUsage: ' . $e->getMessage());
+            }
+            return false;
+        } catch (Exception $e) {
+            // Log general error but don't fail the request
+            error_log('Error in trackUsage: ' . $e->getMessage());
+            return false;
         }
-
-        if (isset($this->params['campaign_name'])) {
-            $trackingData['campaign_name'] = $this->params['campaign_name'];
-        }
-
-        if (isset($this->params['batch_id'])) {
-            $trackingData['batch_id'] = $this->params['batch_id'];
-            $trackingData['batch_type'] = 'queue';
-        }
-
-        $usageTracking = new UsageTracking();
-        return $usageTracking->track($trackingData);
     }
 
     /**
