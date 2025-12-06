@@ -99,13 +99,7 @@ try {
 
         // No hacer redirect, mostrar mensaje de éxito directamente
         $success = '✅ Configuración guardada correctamente.';
-
-        // Debug: Confirmar que llegamos aquí después del POST
-        error_log("Settings POST completed successfully");
     }
-
-    // Debug: Punto de lectura de settings
-    error_log("Reading settings from DB");
 
     // Leer todos los settings de BD
     $stmt = $db->prepare("SELECT setting_key, setting_value, setting_type FROM " . DB_PREFIX . "settings WHERE setting_key IN (
@@ -120,16 +114,6 @@ try {
     $settings = [];
     foreach ($results as $row) {
         $settings[$row['setting_key']] = $row['setting_value'];
-    }
-
-    // Debug: Mostrar settings leídos (comentar después de verificar)
-    if (isset($_GET['debug']) && $_GET['debug'] == '1') {
-        echo "<div class='alert alert-info'>";
-        echo "<h4>DEBUG - Settings leídos de BD:</h4>";
-        echo "<pre>" . print_r($settings, true) . "</pre>";
-        echo "<p><strong>geowrite_ai_model:</strong> " . ($settings['geowrite_ai_model'] ?? 'NO EXISTE') . "</p>";
-        echo "<p><strong>bot_ai_model:</strong> " . ($settings['bot_ai_model'] ?? 'NO EXISTE') . "</p>";
-        echo "</div>";
     }
 
     // Valores por defecto
@@ -148,7 +132,7 @@ try {
     $bot_ai_tone = isset($settings['bot_ai_tone']) ? $settings['bot_ai_tone'] : 'profesional';
     $bot_ai_max_history = isset($settings['bot_ai_max_history']) ? $settings['bot_ai_max_history'] : '10';
 
-    // Obtener lista de modelos disponibles desde la BD
+    // Obtener lista de modelos disponibles
     $stmt = $db->prepare("SELECT DISTINCT model_name FROM " . DB_PREFIX . "model_prices WHERE is_active = 1 ORDER BY model_name");
     $stmt->execute();
     $availableModels = $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -174,11 +158,7 @@ try {
     $bot_ai_tone = 'profesional';
     $bot_ai_max_history = '10';
     $availableModels = ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-5', 'gpt-5-mini'];
-    error_log("[SETTINGS] Exception caught, using defaults");
 }
-
-// Debug: About to render HTML
-error_log("[SETTINGS] About to render HTML. Success: " . ($success ? 'YES' : 'NO') . ", Error: " . ($error ? 'YES' : 'NO'));
 ?>
 
 <style>
@@ -302,10 +282,10 @@ error_log("[SETTINGS] About to render HTML. Success: " . ($success ? 'YES' : 'NO
         
         <div class="form-group">
             <label>OpenAI API Key *</label>
-            <input type="password" 
-                   name="openai_api_key" 
-                   value="<?= htmlspecialchars($openaiKey) ?>" 
-                   placeholder="sk-..." 
+            <input type="text"
+                   name="openai_api_key"
+                   value="<?= htmlspecialchars($openaiKey) ?>"
+                   placeholder="sk-..."
                    required>
             <small>Formato: sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</small>
         </div>
@@ -339,9 +319,9 @@ error_log("[SETTINGS] About to render HTML. Success: " . ($success ? 'YES' : 'NO
         
         <div class="form-group">
             <label>Consumer Secret *</label>
-            <input type="password" 
-                   name="wc_consumer_secret" 
-                   value="<?= htmlspecialchars(WC_CONSUMER_SECRET) ?>" 
+            <input type="text"
+                   name="wc_consumer_secret"
+                   value="<?= htmlspecialchars(WC_CONSUMER_SECRET) ?>"
                    required>
             <small>Empieza con: cs_</small>
         </div>
@@ -439,15 +419,3 @@ error_log("[SETTINGS] About to render HTML. Success: " . ($success ? 'YES' : 'NO
     Los modelos listados provienen de la tabla <code>api_model_prices</code> con <code>is_active = 1</code>.<br>
     Los cambios en la configuración de IA afectan el costo y calidad de las operaciones. Modelos más avanzados (GPT-5, GPT-4.1) son más costosos pero ofrecen mejor calidad.
 </div>
-
-<script>
-// Mostrar contraseñas al hacer hover
-document.querySelectorAll('input[type="password"]').forEach(input => {
-    input.addEventListener('mouseenter', function() {
-        this.type = 'text';
-    });
-    input.addEventListener('mouseleave', function() {
-        this.type = 'password';
-    });
-});
-</script>
