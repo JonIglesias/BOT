@@ -76,10 +76,14 @@ class Database {
             $stmt->execute($params);
             return $stmt->fetchAll();
         } catch (PDOException $e) {
-            Logger::error('Query failed', [
-                'sql' => $sql,
-                'error' => $e->getMessage()
-            ]);
+            if (class_exists('Logger')) {
+                Logger::error('Query failed', [
+                    'sql' => $sql,
+                    'error' => $e->getMessage()
+                ]);
+            } else {
+                error_log('Query failed: ' . $e->getMessage() . ' | SQL: ' . $sql);
+            }
             throw $e;
         }
     }
@@ -93,10 +97,14 @@ class Database {
             $stmt->execute($params);
             return $stmt->fetch();
         } catch (PDOException $e) {
-            Logger::error('Query failed', [
-                'sql' => $sql,
-                'error' => $e->getMessage()
-            ]);
+            if (class_exists('Logger')) {
+                Logger::error('Query failed', [
+                    'sql' => $sql,
+                    'error' => $e->getMessage()
+                ]);
+            } else {
+                error_log('Query failed: ' . $e->getMessage() . ' | SQL: ' . $sql);
+            }
             throw $e;
         }
     }
@@ -110,10 +118,14 @@ class Database {
             $result = $stmt->execute($params);
             return $result;
         } catch (PDOException $e) {
-            Logger::error('Execute failed', [
-                'sql' => $sql,
-                'error' => $e->getMessage()
-            ]);
+            if (class_exists('Logger')) {
+                Logger::error('Execute failed', [
+                    'sql' => $sql,
+                    'error' => $e->getMessage()
+                ]);
+            } else {
+                error_log('Execute failed: ' . $e->getMessage() . ' | SQL: ' . $sql);
+            }
             throw $e;
         }
     }
