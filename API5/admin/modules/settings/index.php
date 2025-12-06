@@ -3,6 +3,13 @@
  * Settings Module
  */
 
+// Helper function para sanitización - DEBE estar ANTES de usarse
+if (!function_exists('sanitize_text_field')) {
+    function sanitize_text_field($str) {
+        return htmlspecialchars(strip_tags(trim($str)), ENT_QUOTES, 'UTF-8');
+    }
+}
+
 $success = '';
 $error = '';
 
@@ -172,13 +179,6 @@ try {
 
 // Debug: About to render HTML
 error_log("[SETTINGS] About to render HTML. Success: " . ($success ? 'YES' : 'NO') . ", Error: " . ($error ? 'YES' : 'NO'));
-
-// Helper function para sanitización si no existe
-if (!function_exists('sanitize_text_field')) {
-    function sanitize_text_field($str) {
-        return htmlspecialchars(strip_tags(trim($str)), ENT_QUOTES, 'UTF-8');
-    }
-}
 ?>
 
 <style>
