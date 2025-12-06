@@ -167,7 +167,11 @@ try {
     $bot_ai_tone = 'profesional';
     $bot_ai_max_history = '10';
     $availableModels = ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-5', 'gpt-5-mini'];
+    error_log("[SETTINGS] Exception caught, using defaults");
 }
+
+// Debug: About to render HTML
+error_log("[SETTINGS] About to render HTML. Success: " . ($success ? 'YES' : 'NO') . ", Error: " . ($error ? 'YES' : 'NO'));
 
 // Helper function para sanitización si no existe
 if (!function_exists('sanitize_text_field')) {
