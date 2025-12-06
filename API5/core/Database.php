@@ -25,10 +25,21 @@ class Database {
 
             $this->connection = new PDO($dsn, DB_USER, DB_PASSWORD, $options);
         } catch (PDOException $e) {
-            Logger::error('Database connection failed', [
-                'error' => $e->getMessage()
-            ]);
-            Response::error('Database connection failed', 500);
+            // Log error only if Logger is available
+            if (class_exists('Logger')) {
+                Logger::error('Database connection failed', [
+                    'error' => $e->getMessage()
+                ]);
+            } else {
+                error_log('Database connection failed: ' . $e->getMessage());
+            }
+
+            // Response only if available
+            if (class_exists('Response')) {
+                Response::error('Database connection failed', 500);
+            } else {
+                die('Database connection failed');
+            }
         }
     }
 
