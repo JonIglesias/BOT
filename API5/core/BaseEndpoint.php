@@ -22,7 +22,7 @@ abstract class BaseEndpoint {
 
     protected $params;
     protected $license;
-    protected $openai;
+    private $_openai; // Private para forzar lazy loading
 
     /**
      * Constructor
@@ -34,7 +34,21 @@ abstract class BaseEndpoint {
         }
 
         $this->params = $params;
-        $this->openai = new OpenAIService();
+        // No crear OpenAI aquí - se crea cuando se necesita (lazy loading)
+        // Esto evita errores de BD antes de validar licencia
+    }
+
+    /**
+     * Magic getter for lazy loading
+     */
+    public function __get($name) {
+        if ($name === 'openai') {
+            if (!$this->_openai) {
+                $this->_openai = new OpenAIService();
+            }
+            return $this->_openai;
+        }
+        return null;
     }
 
     /**
