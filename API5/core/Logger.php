@@ -1,66 +1,122 @@
 <?php
 /**
- * Simple Logger for API5
- * Logs API activity to file
+ * Logger Class
+ * 
+ * @version 4.0
  */
 
 defined('API_ACCESS') or die('Direct access not permitted');
 
 class Logger {
-
-    private static $logFile = null;
-
+    
     /**
-     * Initialize logger
-     */
-    private static function init() {
-        if (self::$logFile === null) {
-            $logDir = API_BASE_DIR . '/logs';
-            if (!is_dir($logDir)) {
-                @mkdir($logDir, 0755, true);
-            }
-            self::$logFile = $logDir . '/api.log';
-        }
-    }
-
-    /**
-     * Log an API event
+     * Log de API general
      */
     public static function api($level, $message, $context = []) {
-        self::init();
-
-        $timestamp = date('Y-m-d H:i:s');
-        $contextStr = empty($context) ? '' : ' ' . json_encode($context);
-        $logEntry = "[{$timestamp}] [{$level}] {$message}{$contextStr}\n";
-
-        @file_put_contents(self::$logFile, $logEntry, FILE_APPEND);
+        if (!defined('ENABLE_API_LOG') || !ENABLE_API_LOG) return;
+        self::write('api', $level, $message, $context);
     }
 
     /**
-     * Log an error
-     */
-    public static function error($message, $context = []) {
-        self::api('ERROR', $message, $context);
-    }
-
-    /**
-     * Log info
-     */
-    public static function info($message, $context = []) {
-        self::api('INFO', $message, $context);
-    }
-
-    /**
-     * Log warning
-     */
-    public static function warning($message, $context = []) {
-        self::api('WARNING', $message, $context);
-    }
-
-    /**
-     * Log sync event
+     * Log de sincronización
      */
     public static function sync($level, $message, $context = []) {
-        self::api(strtoupper($level), '[SYNC] ' . $message, $context);
+        if (!defined('ENABLE_SYNC_LOG') || !ENABLE_SYNC_LOG) return;
+        self::write('sync', $level, $message, $context);
+    }
+
+    /**
+     * Log de webhooks
+     */
+    public static function webhook($level, $message, $context = []) {
+        if (!defined('ENABLE_WEBHOOK_LOG') || !ENABLE_WEBHOOK_LOG) return;
+        self::write('webhook', $level, $message, $context);
+    }
+    
+    /**
+     * Escribir log
+     */
+    private static function write($type, $level, $message, $context = []) {
+        // Verificar nivel de log
+        $levels = ['debug' => 0, 'info' => 1, 'warning' => 2, 'error' => 3];
+        $currentLevel = $levels[LOG_LEVEL] ?? 1;
+        $messageLevel = $levels[$level] ?? 1;
+
+        if ($messageLevel < $currentLevel) {
+            return;
+        }
+
+        // Preparar entrada de log
+        $entry = [
+            'timestamp' => date(DATE_FORMAT),
+            'level' => strtoupper($level),
+            'message' => $message,
+            'context' => $context
+        ];
+
+        // Archivo de log
+        $logFile = API_BASE_DIR . "/logs/{$type}.log";
+
+        // Escribir
+        $logLine = json_encode($entry) . PHP_EOL;
+        @file_put_contents($logFile, $logLine, FILE_APPEND | LOCK_EX);
+
+        // Rotar logs si es necesario
+        self::rotateIfNeeded($logFile);
+    }
+
+    /**
+     * Log de error (shorthand)
+     */
+    public static function error($message, $context = []) {
+        self::api('error', $message, $context);
+    }
+
+    /**
+     * Log de info (shorthand)
+     */
+    public static function info($message, $context = []) {
+        self::api('info', $message, $context);
+    }
+
+    /**
+     * Log de warning (shorthand)
+     */
+    public static function warning($message, $context = []) {
+        self::api('warning', $message, $context);
+    }
+    
+    /**
+     * Rotar logs antiguos
+     */
+    private static function rotateIfNeeded($logFile) {
+        if (!file_exists($logFile)) {
+            return;
+        }
+        
+        $fileTime = filemtime($logFile);
+        $daysSinceModified = (time() - $fileTime) / 86400;
+        
+        if ($daysSinceModified > LOG_MAX_FILES) {
+            $archiveFile = $logFile . '.' . date('Y-m-d', $fileTime) . '.archive';
+            rename($logFile, $archiveFile);
+        }
+    }
+    
+    /**
+     * Limpiar logs antiguos
+     */
+    public static function cleanOldLogs() {
+        $logsDir = API_BASE_DIR . '/logs';
+        $files = glob($logsDir . '/*.archive');
+        
+        foreach ($files as $file) {
+            $fileTime = filemtime($file);
+            $daysSinceModified = (time() - $fileTime) / 86400;
+            
+            if ($daysSinceModified > LOG_MAX_FILES) {
+                unlink($file);
+            }
+        }
     }
 }
