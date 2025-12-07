@@ -426,7 +426,7 @@ class WebhookHandler {
 
             } else {
                 // Crear nueva licencia
-                $licenseKey = $this->generateLicenseKey($orderId, $plan['id'], $productName);
+                $licenseKey = $this->generateLicenseKey($orderId, $plan['id'], $productName, $orderDate);
 
                 $this->db->insert('licenses', [
                     'license_key' => $licenseKey,
@@ -507,33 +507,34 @@ class WebhookHandler {
     }
 
     /**
-     * Generar license key con prefijo BOT o GEO
-     * Formato: {PREFIX}-{order_id}-{plan_id}-{year}-{random}
-     * Ejemplo: BOT-628-10-2025-83772E2C o GEO-628-10-2025-83772E2C
+     * Generar license key única
+     *
+     * Estructura: {PLAN_ID}-{ORDER_ID}-{DD-MM-YYYY}-{RANDOM}
+     * Ejemplos:
+     * - GEO30-1345-01-12-2025-A534BR646
+     * - BOT20-1367-12-11-2025-B636ZXC897
      *
      * @param int $orderId ID del pedido
-     * @param string $planId ID del plan
-     * @param string $productName Nombre del producto (opcional)
+     * @param string $planId ID del plan (ej: GEO30, BOT20)
+     * @param string $productName Nombre del producto (NO SE USA, mantener por compatibilidad)
+     * @param string $orderDate Fecha del pedido (opcional)
      * @return string License key generada
      */
-    private function generateLicenseKey($orderId, $planId, $productName = '') {
-        $year = date('Y');
-        $random = strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));
-
-        // Determinar prefijo basado en el producto
-        $prefix = 'GEO'; // Por defecto GeoWriter
-
-        // Si el nombre del producto o plan contiene "bot" o "chatbot", usar BOT
-        $lowerName = strtolower($productName);
-        $lowerPlan = strtolower($planId);
-
-        if (stripos($lowerName, 'bot') !== false ||
-            stripos($lowerName, 'chat') !== false ||
-            stripos($lowerPlan, 'bot') !== false) {
-            $prefix = 'BOT';
+    private function generateLicenseKey($orderId, $planId, $productName = '', $orderDate = null) {
+        // Fecha en formato DD-MM-YYYY
+        if ($orderDate) {
+            // Si viene en formato 'Y-m-d H:i:s', convertir a DD-MM-YYYY
+            $timestamp = strtotime($orderDate);
+            $date = date('d-m-Y', $timestamp);
+        } else {
+            $date = date('d-m-Y');
         }
 
-        return "{$prefix}-{$orderId}-{$planId}-{$year}-{$random}";
+        // Random de 9 caracteres alfanuméricos en mayúsculas
+        $random = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 9));
+
+        // Estructura: PLAN_ID-ORDER_ID-DD-MM-YYYY-RANDOM
+        return "{$planId}-{$orderId}-{$date}-{$random}";
     }
 
     // ========== HELPERS ==========
