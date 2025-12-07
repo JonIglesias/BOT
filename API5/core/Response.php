@@ -31,23 +31,13 @@ class Response {
             $additionalData = ['error_code' => $additionalData];
         }
 
-        // Backward compatibility: If no additional data, return error as simple string
-        // This maintains compatibility with old WordPress plugin JavaScript
-        if (empty($additionalData)) {
-            echo json_encode([
-                'success' => false,
-                'error' => $message
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        } else {
-            // New format with additional data (used by BOT and new endpoints)
-            echo json_encode([
-                'success' => false,
-                'error' => array_merge([
-                    'message' => $message,
-                    'code' => self::getErrorCode($statusCode)
-                ], is_array($additionalData) ? $additionalData : [])
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        }
+        echo json_encode([
+            'success' => false,
+            'error' => array_merge([
+                'message' => $message,
+                'code' => self::getErrorCode($statusCode)
+            ], is_array($additionalData) ? $additionalData : [])
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         exit;
     }
 
