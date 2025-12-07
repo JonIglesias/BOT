@@ -34,12 +34,8 @@ class Database {
                 error_log('Database connection failed: ' . $e->getMessage());
             }
 
-            // Response only if available
-            if (class_exists('Response')) {
-                Response::error('Database connection failed', 500);
-            } else {
-                die('Database connection failed');
-            }
+            // Throw exception instead of die() so it can be caught
+            throw new Exception('Database connection failed: ' . $e->getMessage(), 500, $e);
         }
     }
 
