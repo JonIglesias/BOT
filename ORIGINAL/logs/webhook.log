@@ -1,0 +1,16 @@
+{"timestamp":"2025-12-04 17:38:29","level":"INFO","message":"Webhook request received","context":{"client_ip":"31.200.246.223","remote_addr":"31.200.246.223","forwarded_for":"none","user_agent":"WooCommerce\/10.3.6 Hookshot (WordPress\/6.9)","content_type":"application\/json"}}
+{"timestamp":"2025-12-04 17:38:29","level":"INFO","message":"Webhook received","context":{"event":"order.created","subscription_id":1435}}
+{"timestamp":"2025-12-04 17:38:29","level":"INFO","message":"License created from order","context":{"license_id":"55","license_key":"1435-20-2025-16570D0B","order_id":1435,"email":"jon@bocetos.com","plan":"20"}}
+{"timestamp":"2025-12-04 17:38:31","level":"INFO","message":"License key synced to WooCommerce","context":{"license_id":"55","order_id":1435,"license_key":"1435-20-2025-16570D0B","attempts":1}}
+{"timestamp":"2025-12-04 17:38:32","level":"INFO","message":"Webhook request received","context":{"client_ip":"31.200.246.223","remote_addr":"31.200.246.223","forwarded_for":"none","user_agent":"WooCommerce\/10.3.6 Hookshot (WordPress\/6.9)","content_type":"application\/json"}}
+{"timestamp":"2025-12-04 17:38:32","level":"INFO","message":"Webhook received","context":{"event":"order.updated","subscription_id":1435}}
+{"timestamp":"2025-12-04 17:38:32","level":"INFO","message":"License updated from order","context":{"license_id":55,"order_id":1435}}
+{"timestamp":"2025-12-04 17:38:32","level":"INFO","message":"License key synced to WooCommerce","context":{"license_id":55,"order_id":1435,"attempts":1}}
+{"timestamp":"2025-12-04 19:10:31","level":"INFO","message":"Webhook request received","context":{"client_ip":"31.200.246.223","remote_addr":"31.200.246.223","forwarded_for":"none","user_agent":"WooCommerce\/10.3.6 Hookshot (WordPress\/6.9)","content_type":"application\/json"}}
+{"timestamp":"2025-12-04 19:10:31","level":"INFO","message":"Webhook received","context":{"event":"order.created","subscription_id":1437}}
+{"timestamp":"2025-12-04 19:10:31","level":"INFO","message":"License created from order","context":{"license_id":"56","license_key":"1437-10-2025-434AA5EF","order_id":1437,"email":"helena.moran@icloud.com","plan":"10"}}
+{"timestamp":"2025-12-04 19:10:33","level":"INFO","message":"License key synced to WooCommerce","context":{"license_id":"56","order_id":1437,"license_key":"1437-10-2025-434AA5EF","attempts":1}}
+{"timestamp":"2025-12-04 19:10:33","level":"INFO","message":"Webhook request received","context":{"client_ip":"31.200.246.223","remote_addr":"31.200.246.223","forwarded_for":"none","user_agent":"WooCommerce\/10.3.6 Hookshot (WordPress\/6.9)","content_type":"application\/json"}}
+{"timestamp":"2025-12-04 19:10:33","level":"INFO","message":"Webhook received","context":{"event":"order.updated","subscription_id":1437}}
+{"timestamp":"2025-12-04 19:10:33","level":"INFO","message":"License updated from order","context":{"license_id":56,"order_id":1437}}
+{"timestamp":"2025-12-04 19:10:33","level":"INFO","message":"License key synced to WooCommerce","context":{"license_id":56,"order_id":1437,"attempts":1}}
