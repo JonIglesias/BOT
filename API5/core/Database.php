@@ -1,46 +1,53 @@
 <?php
 /**
- * Database Connection Handler for API5
- * Singleton PDO connection manager
+ * Database Connection Class
+ *
+ * @version 4.0
  */
 
 defined('API_ACCESS') or die('Direct access not permitted');
 
 class Database {
-
     private static $instance = null;
-    private $connection = null;
+    private $pdo = null;
 
     /**
-     * Private constructor to prevent direct instantiation
+     * Constructor privado para Singleton
      */
     private function __construct() {
         try {
-            $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
-            $options = [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ];
+            $dsn = sprintf(
+                "mysql:host=%s;dbname=%s;charset=%s",
+                DB_HOST,
+                DB_NAME,
+                DB_CHARSET
+            );
 
-            $this->connection = new PDO($dsn, DB_USER, DB_PASSWORD, $options);
+            $this->pdo = new PDO(
+                $dsn,
+                DB_USER,
+                DB_PASSWORD,
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false
+                ]
+            );
         } catch (PDOException $e) {
-            // Log error only if Logger is available
+            // Log error with Logger if available (improvement)
             if (class_exists('Logger')) {
                 Logger::error('Database connection failed', [
                     'error' => $e->getMessage()
                 ]);
             } else {
-                error_log('Database connection failed: ' . $e->getMessage());
+                error_log("Database connection error: " . $e->getMessage());
             }
-
-            // Throw exception instead of die() so it can be caught
-            throw new Exception('Database connection failed: ' . $e->getMessage(), 500, $e);
+            throw new Exception("Database connection failed");
         }
     }
 
     /**
-     * Get singleton instance
+     * Obtener instancia única
      */
     public static function getInstance() {
         if (self::$instance === null) {
@@ -50,165 +57,219 @@ class Database {
     }
 
     /**
-     * Get PDO connection
-     */
-    public function getConnection() {
-        return $this->connection;
-    }
-
-    /**
-     * Prepare a statement (for compatibility with existing code)
-     */
-    public function prepare($sql) {
-        return $this->connection->prepare($sql);
-    }
-
-    /**
-     * Execute a SELECT query
+     * Ejecutar query con parámetros
      */
     public function query($sql, $params = []) {
         try {
-            $stmt = $this->connection->prepare($sql);
+            $stmt = $this->pdo->prepare($sql);
             $stmt->execute($params);
             return $stmt->fetchAll();
         } catch (PDOException $e) {
+            // Log with Logger if available (improvement)
             if (class_exists('Logger')) {
                 Logger::error('Query failed', [
                     'sql' => $sql,
                     'error' => $e->getMessage()
                 ]);
             } else {
-                error_log('Query failed: ' . $e->getMessage() . ' | SQL: ' . $sql);
+                error_log("Database query error: " . $e->getMessage() . " | SQL: " . $sql);
             }
             throw $e;
         }
     }
 
     /**
-     * Execute a SELECT query and return single row
+     * Obtener un solo registro
      */
-    public function queryOne($sql, $params = []) {
+    public function fetchOne($sql, $params = []) {
         try {
-            $stmt = $this->connection->prepare($sql);
+            $stmt = $this->pdo->prepare($sql);
             $stmt->execute($params);
             return $stmt->fetch();
         } catch (PDOException $e) {
+            // Log with Logger if available (improvement)
             if (class_exists('Logger')) {
                 Logger::error('Query failed', [
                     'sql' => $sql,
                     'error' => $e->getMessage()
                 ]);
             } else {
-                error_log('Query failed: ' . $e->getMessage() . ' | SQL: ' . $sql);
+                error_log("Database fetchOne error: " . $e->getMessage() . " | SQL: " . $sql);
             }
             throw $e;
         }
     }
 
     /**
-     * Execute an INSERT, UPDATE, or DELETE query
+     * Obtener todos los registros
      */
-    public function execute($sql, $params = []) {
+    public function fetchAll($sql, $params = []) {
         try {
-            $stmt = $this->connection->prepare($sql);
-            $result = $stmt->execute($params);
-            return $result;
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll();
         } catch (PDOException $e) {
+            // Log with Logger if available (improvement)
             if (class_exists('Logger')) {
-                Logger::error('Execute failed', [
+                Logger::error('Query failed', [
                     'sql' => $sql,
                     'error' => $e->getMessage()
                 ]);
             } else {
-                error_log('Execute failed: ' . $e->getMessage() . ' | SQL: ' . $sql);
+                error_log("Database fetchAll error: " . $e->getMessage() . " | SQL: " . $sql);
             }
             throw $e;
         }
     }
 
     /**
-     * Get last inserted ID
+     * Preparar statement
      */
-    public function lastInsertId() {
-        return $this->connection->lastInsertId();
+    public function prepare($sql) {
+        return $this->pdo->prepare($sql);
     }
 
     /**
-     * Alias for queryOne - used by models
-     */
-    public function fetchOne($sql, $params = []) {
-        return $this->queryOne($sql, $params);
-    }
-
-    /**
-     * Alias for query - used by models
-     */
-    public function fetchAll($sql, $params = []) {
-        return $this->query($sql, $params);
-    }
-
-    /**
-     * Insert data into a table
+     * Ejecutar INSERT
      */
     public function insert($table, $data) {
-        $table = DB_PREFIX . $table;
         $columns = array_keys($data);
-        $placeholders = array_fill(0, count($columns), '?');
+        $placeholders = array_map(function($col) { return ":$col"; }, $columns);
 
-        $sql = "INSERT INTO {$table} (" . implode(', ', $columns) . ")
-                VALUES (" . implode(', ', $placeholders) . ")";
+        $sql = sprintf(
+            "INSERT INTO %s%s (%s) VALUES (%s)",
+            DB_PREFIX,
+            $table,
+            implode(', ', $columns),
+            implode(', ', $placeholders)
+        );
 
-        $this->execute($sql, array_values($data));
-        return $this->lastInsertId();
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($data);
+            return $this->pdo->lastInsertId();
+        } catch (PDOException $e) {
+            // Log with Logger if available (improvement)
+            if (class_exists('Logger')) {
+                Logger::error('Insert failed', [
+                    'table' => $table,
+                    'sql' => $sql,
+                    'error' => $e->getMessage()
+                ]);
+            } else {
+                error_log("Database insert error: " . $e->getMessage() . " | SQL: " . $sql);
+            }
+            throw $e;
+        }
     }
 
     /**
-     * Update data in a table
+     * Ejecutar UPDATE
      */
     public function update($table, $data, $where, $whereParams = []) {
-        $table = DB_PREFIX . $table;
-        $setParts = [];
-        $values = [];
+        $sets = array_map(function($col) { return "$col = :$col"; }, array_keys($data));
 
-        foreach ($data as $column => $value) {
-            $setParts[] = "{$column} = ?";
-            $values[] = $value;
+        $sql = sprintf(
+            "UPDATE %s%s SET %s WHERE %s",
+            DB_PREFIX,
+            $table,
+            implode(', ', $sets),
+            $where
+        );
+
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            // Merge data params and where params
+            $allParams = array_merge($data, $whereParams);
+            $stmt->execute($allParams);
+            return $stmt->rowCount();
+        } catch (PDOException $e) {
+            // Log with Logger if available (improvement)
+            if (class_exists('Logger')) {
+                Logger::error('Update failed', [
+                    'table' => $table,
+                    'sql' => $sql,
+                    'error' => $e->getMessage()
+                ]);
+            } else {
+                error_log("Database update error: " . $e->getMessage() . " | SQL: " . $sql);
+            }
+            throw $e;
         }
-
-        $sql = "UPDATE {$table} SET " . implode(', ', $setParts) . " WHERE {$where}";
-        $allParams = array_merge($values, $whereParams);
-
-        return $this->execute($sql, $allParams);
     }
 
     /**
-     * Begin transaction
+     * Ejecutar DELETE
+     */
+    public function delete($table, $where, $whereParams = []) {
+        $sql = sprintf(
+            "DELETE FROM %s%s WHERE %s",
+            DB_PREFIX,
+            $table,
+            $where
+        );
+
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($whereParams);
+            return $stmt->rowCount();
+        } catch (PDOException $e) {
+            // Log with Logger if available (improvement)
+            if (class_exists('Logger')) {
+                Logger::error('Delete failed', [
+                    'table' => $table,
+                    'sql' => $sql,
+                    'error' => $e->getMessage()
+                ]);
+            } else {
+                error_log("Database delete error: " . $e->getMessage() . " | SQL: " . $sql);
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * Obtener último ID insertado
+     */
+    public function lastInsertId() {
+        return $this->pdo->lastInsertId();
+    }
+
+    /**
+     * Comenzar transacción
      */
     public function beginTransaction() {
-        return $this->connection->beginTransaction();
+        return $this->pdo->beginTransaction();
     }
 
     /**
-     * Commit transaction
+     * Commit transacción
      */
     public function commit() {
-        return $this->connection->commit();
+        return $this->pdo->commit();
     }
 
     /**
-     * Rollback transaction
+     * Rollback transacción
      */
     public function rollback() {
-        return $this->connection->rollBack();
+        return $this->pdo->rollBack();
     }
 
     /**
-     * Prevent cloning
+     * Obtener conexión PDO (para casos especiales)
+     */
+    public function getConnection() {
+        return $this->pdo;
+    }
+
+    /**
+     * Prevenir clonación
      */
     private function __clone() {}
 
     /**
-     * Prevent unserialization
+     * Prevenir unserialize
      */
     public function __wakeup() {
         throw new Exception("Cannot unserialize singleton");
