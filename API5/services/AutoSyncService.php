@@ -383,7 +383,7 @@ class AutoSyncService {
                 } else {
                     // Crear nueva licencia para este pedido
                     // Nota: Un usuario puede tener múltiples licencias (renovaciones, múltiples pedidos, etc.)
-                    $licenseKey = $this->generateLicenseKey($orderId, $plan['id']);
+                    $licenseKey = $this->generateLicenseKey($orderId, $plan['id'], $orderDate);
 
                     Logger::sync('info', 'Creating new license for order', [
                         'order_id' => $orderId,
@@ -478,14 +478,33 @@ class AutoSyncService {
     }
 
     /**
-     * Generar license key
-     * Formato: {order_id}-{plan_id}-{year}-{random}
-     * Ejemplo: 628-10-2025-83772E2C
+     * Generar license key única
+     *
+     * Estructura: {PLAN_ID}-{ORDER_ID}-{DD-MM-YYYY}-{RANDOM}
+     * Ejemplos:
+     * - GEO30-1345-01-12-2025-A534BR646
+     * - BOT20-1367-12-11-2025-B636ZXC897
+     *
+     * @param int $orderId ID del pedido
+     * @param string $planId ID del plan (ej: GEO30, BOT20)
+     * @param string $orderDate Fecha del pedido (opcional)
+     * @return string License key generada
      */
-    private function generateLicenseKey($orderId, $planId) {
-        $year = date('Y');
-        $random = strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));
-        return "{$orderId}-{$planId}-{$year}-{$random}";
+    private function generateLicenseKey($orderId, $planId, $orderDate = null) {
+        // Fecha en formato DD-MM-YYYY
+        if ($orderDate) {
+            // Si viene en formato 'Y-m-d H:i:s', convertir a DD-MM-YYYY
+            $timestamp = strtotime($orderDate);
+            $date = date('d-m-Y', $timestamp);
+        } else {
+            $date = date('d-m-Y');
+        }
+
+        // Random de 9 caracteres alfanuméricos en mayúsculas
+        $random = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 9));
+
+        // Estructura: PLAN_ID-ORDER_ID-DD-MM-YYYY-RANDOM
+        return "{$planId}-{$orderId}-{$date}-{$random}";
     }
 
     /**
