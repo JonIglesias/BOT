@@ -1,81 +1,101 @@
 <?php
 /**
- * Response Helper for API5
- * Handles JSON responses and input parsing
+ * Response Class
+ * 
+ * @version 4.0
  */
 
 defined('API_ACCESS') or die('Direct access not permitted');
 
 class Response {
-
+    
     /**
-     * Send a successful JSON response
+     * Enviar respuesta exitosa
      */
-    public static function success($data = [], $statusCode = 200) {
-        http_response_code($statusCode);
-        echo json_encode([
-            'success' => true,
-            'data' => $data
-        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    /**
-     * Send an error JSON response
-     */
-    public static function error($message, $statusCode = 400, $additionalData = []) {
-        http_response_code($statusCode);
-
-        // Convert string to array if needed (for backward compatibility)
-        if (is_string($additionalData)) {
-            $additionalData = ['error_code' => $additionalData];
+    public static function success($data = null, $message = null, $code = 200) {
+        http_response_code($code);
+        header('Content-Type: application/json');
+        
+        $response = [
+            'success' => true
+        ];
+        
+        if ($message !== null) {
+            $response['message'] = $message;
         }
-
-        echo json_encode([
-            'success' => false,
-            'error' => array_merge([
-                'message' => $message,
-                'code' => self::getErrorCode($statusCode)
-            ], is_array($additionalData) ? $additionalData : [])
-        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        
+        if ($data !== null) {
+            $response['data'] = $data;
+        }
+        
+        echo json_encode($response, JSON_PRETTY_PRINT);
         exit;
     }
-
+    
     /**
-     * Get JSON input from request body
+     * Enviar respuesta de error
+     */
+    public static function error($message, $code = 400, $details = null) {
+        http_response_code($code);
+        header('Content-Type: application/json');
+        
+        $response = [
+            'success' => false,
+            'error' => $message
+        ];
+        
+        if ($details !== null) {
+            $response['details'] = $details;
+        }
+        
+        echo json_encode($response, JSON_PRETTY_PRINT);
+        exit;
+    }
+    
+    /**
+     * Validar campos requeridos en request
+     */
+    public static function validateRequired($data, $requiredFields) {
+        $missing = [];
+        
+        foreach ($requiredFields as $field) {
+            if (!isset($data[$field]) || $data[$field] === '') {
+                $missing[] = $field;
+            }
+        }
+        
+        if (!empty($missing)) {
+            self::error(
+                'Missing required fields',
+                400,
+                ['missing_fields' => $missing]
+            );
+        }
+    }
+    
+    /**
+     * Obtener datos del request (POST JSON)
      */
     public static function getJsonInput() {
         $input = file_get_contents('php://input');
-
+        
         if (empty($input)) {
             return [];
         }
-
-        $decoded = json_decode($input, true);
-
+        
+        $data = json_decode($input, true);
+        
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return [];
+            self::error('Invalid JSON: ' . json_last_error_msg(), 400);
         }
-
-        return $decoded;
+        
+        return $data ?? [];
     }
-
+    
     /**
-     * Get error code string from HTTP status code
+     * Obtener parámetros GET
      */
-    private static function getErrorCode($statusCode) {
-        $codes = [
-            400 => 'BAD_REQUEST',
-            401 => 'UNAUTHORIZED',
-            402 => 'PAYMENT_REQUIRED',
-            403 => 'FORBIDDEN',
-            404 => 'NOT_FOUND',
-            409 => 'CONFLICT',
-            429 => 'TOO_MANY_REQUESTS',
-            500 => 'INTERNAL_SERVER_ERROR',
-            503 => 'SERVICE_UNAVAILABLE'
-        ];
-
-        return $codes[$statusCode] ?? 'UNKNOWN_ERROR';
+    public static function getQueryParams() {
+        return $_GET;
     }
 }
