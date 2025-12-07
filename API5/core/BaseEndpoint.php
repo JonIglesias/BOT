@@ -79,12 +79,6 @@ abstract class BaseEndpoint {
                 Response::error('Domain mismatch', 401);
             }
 
-            // Verificar que es licencia GEO
-            $planId = $license['plan_id'] ?? '';
-            if (!preg_match('/^GEO/i', $planId)) {
-                Response::error('This license is not for GeoWriter product', 401);
-            }
-
             // Verificar tokens disponibles
             $tokensUsed = $license['tokens_used_this_period'] ?? 0;
             $tokensLimit = $license['tokens_limit'] ?? 0;
