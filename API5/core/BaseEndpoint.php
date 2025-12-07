@@ -32,6 +32,17 @@ abstract class BaseEndpoint {
     public function __construct() {
         $this->params = Response::getJsonInput();
         $this->licenseKey = $this->params['license_key'] ?? $_GET['license_key'] ?? null;
+
+        // Log endpoint call for debugging
+        Logger::info('Endpoint instantiated', [
+            'endpoint' => get_class($this),
+            'license_key' => $this->licenseKey ? substr($this->licenseKey, 0, 12) . '...' : 'NONE',
+            'has_params' => !empty($this->params),
+            'param_keys' => array_keys($this->params),
+            'request_method' => $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN',
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'UNKNOWN'
+        ]);
+
         $this->promptManager = new PromptManager();
         $this->openai = new OpenAIService();
     }
@@ -43,6 +54,9 @@ abstract class BaseEndpoint {
      */
     protected function validateLicense() {
         if (!$this->licenseKey) {
+            Logger::warning('License validation failed: no key provided', [
+                'endpoint' => get_class($this)
+            ]);
             Response::error('License key requerida', 401);
         }
 
@@ -50,8 +64,19 @@ abstract class BaseEndpoint {
         $validation = $validator->validate($this->licenseKey);
 
         if (!$validation['valid']) {
+            Logger::warning('License validation failed', [
+                'endpoint' => get_class($this),
+                'license_key' => substr($this->licenseKey, 0, 12) . '...',
+                'reason' => $validation['reason'] ?? 'Unknown'
+            ]);
             Response::error($validation['reason'] ?? 'Invalid license', 401);
         }
+
+        Logger::info('License validated successfully', [
+            'endpoint' => get_class($this),
+            'license_id' => $validation['license']['id'] ?? 'UNKNOWN',
+            'plan_id' => $validation['license']['plan_id'] ?? 'UNKNOWN'
+        ]);
 
         $this->license = $validation['license'];
     }
@@ -64,6 +89,10 @@ abstract class BaseEndpoint {
      */
     protected function trackUsage($operationType, $result) {
         if (!$this->license) {
+            Logger::warning('Cannot track usage: no license', [
+                'endpoint' => get_class($this),
+                'operation' => $operationType
+            ]);
             return;
         }
 
@@ -75,6 +104,15 @@ abstract class BaseEndpoint {
             $campaignId = $this->params['campaign_id'] ?? null;
             $campaignName = $this->params['campaign_name'] ?? null;
             $batchId = $this->params['batch_id'] ?? null;
+
+            Logger::info('Tracking usage', [
+                'endpoint' => get_class($this),
+                'operation' => $operationType,
+                'tokens' => $tokensUsed,
+                'campaign_id' => $campaignId,
+                'batch_id' => $batchId,
+                'license_id' => $this->license['id']
+            ]);
 
             UsageTracking::record(
                 $this->license['id'],
@@ -89,6 +127,12 @@ abstract class BaseEndpoint {
 
             // Actualizar contador de licencia
             License::incrementTokens($this->license['id'], $tokensUsed);
+        } else {
+            Logger::warning('No tokens to track', [
+                'endpoint' => get_class($this),
+                'operation' => $operationType,
+                'result_keys' => array_keys($result)
+            ]);
         }
     }
 
