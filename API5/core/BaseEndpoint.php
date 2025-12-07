@@ -28,6 +28,11 @@ abstract class BaseEndpoint {
      * Constructor
      */
     public function __construct($params = []) {
+        // Si no se pasan parámetros, leer del request (compatibilidad v4)
+        if (empty($params)) {
+            $params = Response::getJsonInput();
+        }
+
         $this->params = $params;
         $this->openai = new OpenAIService();
     }
