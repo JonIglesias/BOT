@@ -13,21 +13,29 @@ class Response {
      * Enviar respuesta exitosa
      */
     public static function success($data = null, $message = null, $code = 200) {
+        // Log successful response
+        Logger::info('Response success', [
+            'code' => $code,
+            'has_data' => $data !== null,
+            'has_message' => $message !== null,
+            'data_keys' => is_array($data) ? array_keys($data) : 'not-array'
+        ]);
+
         http_response_code($code);
         header('Content-Type: application/json');
-        
+
         $response = [
             'success' => true
         ];
-        
+
         if ($message !== null) {
             $response['message'] = $message;
         }
-        
+
         if ($data !== null) {
             $response['data'] = $data;
         }
-        
+
         echo json_encode($response, JSON_PRETTY_PRINT);
         exit;
     }
@@ -36,18 +44,25 @@ class Response {
      * Enviar respuesta de error
      */
     public static function error($message, $code = 400, $details = null) {
+        // Log error response
+        Logger::error('Response error', [
+            'code' => $code,
+            'message' => $message,
+            'has_details' => $details !== null
+        ]);
+
         http_response_code($code);
         header('Content-Type: application/json');
-        
+
         $response = [
             'success' => false,
             'error' => $message
         ];
-        
+
         if ($details !== null) {
             $response['details'] = $details;
         }
-        
+
         echo json_encode($response, JSON_PRETTY_PRINT);
         exit;
     }
