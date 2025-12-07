@@ -11,7 +11,7 @@
 defined('API_ACCESS') or die('Direct access not permitted');
 
 require_once API_BASE_DIR . '/core/Response.php';
-require_once API_BASE_DIR . '/core/PromptManager.php';
+// require_once API_BASE_DIR . '/core/PromptManager.php'; // File doesn't exist, not used
 require_once API_BASE_DIR . '/models/License.php';
 require_once API_BASE_DIR . '/models/UsageTracking.php';
 require_once API_BASE_DIR . '/services/LicenseValidator.php';
@@ -32,7 +32,7 @@ abstract class BaseEndpoint {
     public function __construct() {
         $this->params = Response::getJsonInput();
         $this->licenseKey = $this->params['license_key'] ?? $_GET['license_key'] ?? null;
-        $this->promptManager = new PromptManager();
+        // $this->promptManager = new PromptManager(); // PromptManager doesn't exist, not used
         $this->openai = new OpenAIService();
     }
 
