@@ -809,13 +809,17 @@ function ap_autopilot_generate_handler() {
         $campaign_id = intval($_POST['campaign_id'] ?? 0);
         $sources = json_decode(stripslashes($_POST['sources'] ?? '{}'), true);
 
+        error_log('[AUTOPILOT GENERATE] Field: ' . $field . ' | Campaign ID: ' . $campaign_id);
+
         if (empty($field) || !$campaign_id) {
+            error_log('[AUTOPILOT GENERATE] ERROR: Datos incompletos');
             wp_send_json_error('Datos incompletos');
             return;
         }
 
         $api = new AP_API_Client();
         $result = null;
+        $content = '';
 
         // Generar batch_id para tracking
         $batch_id = 'autopilot_' . $campaign_id . '_' . time();
@@ -876,20 +880,25 @@ function ap_autopilot_generate_handler() {
                 break;
 
             default:
+                error_log('[AUTOPILOT GENERATE] ERROR: Campo no válido: ' . $field);
                 wp_send_json_error('Campo no válido: ' . $field);
                 return;
         }
 
         if (!$result || !$result['success']) {
+            error_log('[AUTOPILOT GENERATE] ERROR para ' . $field . ': ' . ($result['error'] ?? 'Unknown error'));
             wp_send_json_error($result['error'] ?? 'Error al generar ' . $field);
             return;
         }
+
+        error_log('[AUTOPILOT GENERATE] SUCCESS para ' . $field . ' | Content length: ' . strlen($content));
 
         wp_send_json_success([
             'content' => $content
         ]);
 
     } catch (Exception $e) {
+        error_log('[AUTOPILOT GENERATE] EXCEPTION: ' . $e->getMessage());
         wp_send_json_error('Error: ' . $e->getMessage());
     }
 }
@@ -909,7 +918,11 @@ function ap_autopilot_update_campaign_handler() {
 
         $data = json_decode(stripslashes($_POST['data'] ?? '{}'), true);
 
+        // LOG: Datos recibidos
+        error_log('[AUTOPILOT UPDATE] Datos recibidos: ' . print_r($data, true));
+
         if (empty($data) || !isset($data['campaign_id'])) {
+            error_log('[AUTOPILOT UPDATE] ERROR: Datos incompletos');
             wp_send_json_error('Datos incompletos');
             return;
         }
@@ -926,6 +939,9 @@ function ap_autopilot_update_campaign_handler() {
             'updated_at' => current_time('mysql')
         ];
 
+        error_log('[AUTOPILOT UPDATE] Actualizando campaña ID: ' . $campaign_id);
+        error_log('[AUTOPILOT UPDATE] Datos a actualizar: ' . print_r($update_data, true));
+
         $updated = $wpdb->update(
             $table_name,
             $update_data,
@@ -935,16 +951,21 @@ function ap_autopilot_update_campaign_handler() {
         );
 
         if ($updated === false) {
+            error_log('[AUTOPILOT UPDATE] ERROR en update: ' . $wpdb->last_error);
             wp_send_json_error('Error al actualizar campaña: ' . $wpdb->last_error);
             return;
         }
 
+        error_log('[AUTOPILOT UPDATE] Campaña actualizada exitosamente. Rows affected: ' . $updated);
+
         wp_send_json_success([
             'message' => 'Campaña actualizada correctamente',
-            'campaign_id' => $campaign_id
+            'campaign_id' => $campaign_id,
+            'rows_updated' => $updated
         ]);
 
     } catch (Exception $e) {
+        error_log('[AUTOPILOT UPDATE] EXCEPTION: ' . $e->getMessage());
         wp_send_json_error('Error: ' . $e->getMessage());
     }
 }
