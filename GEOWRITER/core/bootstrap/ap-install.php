@@ -69,53 +69,6 @@ function ap_create_tables() {
     ) $charset";
     $wpdb->query($sql_queue);
 
-    // Tabla logs
-    $logs_table = $wpdb->prefix . 'ap_logs';
-    $sql_logs = "CREATE TABLE IF NOT EXISTS $logs_table (
-        id bigint(20) NOT NULL AUTO_INCREMENT,
-        type varchar(20) NOT NULL,
-        message text,
-        context text,
-        created_at datetime DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        KEY type (type),
-        KEY created_at (created_at)
-    ) $charset";
-    $wpdb->query($sql_logs);
-
-    // Tabla de consumo de tokens
-    $tokens_table = $wpdb->prefix . 'ap_token_usage';
-    $sql_tokens = "CREATE TABLE IF NOT EXISTS $tokens_table (
-        id bigint(20) NOT NULL AUTO_INCREMENT,
-        action varchar(100) NOT NULL,
-        tokens int(11) NOT NULL DEFAULT 0,
-        context text,
-        created_at datetime DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        KEY action (action),
-        KEY created_at (created_at)
-    ) $charset";
-    $wpdb->query($sql_tokens);
-
-    // Tabla de registro de ejecución
-    $execution_log_table = $wpdb->prefix . 'ap_execution_log';
-    $sql_execution_log = "CREATE TABLE IF NOT EXISTS $execution_log_table (
-        id bigint(20) NOT NULL AUTO_INCREMENT,
-        campaign_id bigint(20) DEFAULT NULL,
-        queue_id bigint(20) DEFAULT NULL,
-        action varchar(100) NOT NULL,
-        tokens_consumed int(11) DEFAULT 0,
-        success tinyint(1) DEFAULT 1,
-        error_message text,
-        execution_time float DEFAULT 0,
-        created_at datetime DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        KEY campaign_id (campaign_id),
-        KEY queue_id (queue_id),
-        KEY created_at (created_at)
-    ) $charset";
-    $wpdb->query($sql_execution_log);
-
     // Tabla de bloqueos (Sistema V2)
     $locks_table = $wpdb->prefix . 'ap_locks';
     $sql_locks = "CREATE TABLE IF NOT EXISTS $locks_table (
