@@ -428,17 +428,23 @@ function ap_step_update_campaign_final($form_data, $results) {
     try {
         global $wpdb;
         $table_name = $wpdb->prefix . 'ap_campaigns';
-        
+
+        error_log('[AUTOPILOT FINAL] Iniciando actualización final de campaña');
+        error_log('[AUTOPILOT FINAL] Results recibidos: ' . print_r(array_keys($results), true));
+
         // Obtener campaign_id del primer paso
         $campaign_id = $results['save_campaign_initial']['campaign_id'] ?? null;
-        
+
         if (!$campaign_id) {
+            error_log('[AUTOPILOT FINAL] ERROR: No se encontró campaign_id en results');
             return [
                 'success' => false,
                 'error' => 'No se encontró el ID de la campaña'
             ];
         }
-        
+
+        error_log('[AUTOPILOT FINAL] Campaign ID: ' . $campaign_id);
+
         // Preparar datos para actualizar
         $update_data = [
             'company_desc' => $results['generate_company_description']['company_description'] ?? '',
@@ -448,7 +454,14 @@ function ap_step_update_campaign_final($form_data, $results) {
             'keywords_images' => $results['generate_image_keywords']['image_keywords'] ?? '',
             'updated_at' => current_time('mysql')
         ];
-        
+
+        error_log('[AUTOPILOT FINAL] Datos a actualizar:');
+        error_log('[AUTOPILOT FINAL] - company_desc length: ' . strlen($update_data['company_desc']));
+        error_log('[AUTOPILOT FINAL] - keywords_seo length: ' . strlen($update_data['keywords_seo']));
+        error_log('[AUTOPILOT FINAL] - prompt_titles length: ' . strlen($update_data['prompt_titles']));
+        error_log('[AUTOPILOT FINAL] - prompt_content length: ' . strlen($update_data['prompt_content']));
+        error_log('[AUTOPILOT FINAL] - keywords_images length: ' . strlen($update_data['keywords_images']));
+
         $updated = $wpdb->update(
             $table_name,
             $update_data,
@@ -456,15 +469,17 @@ function ap_step_update_campaign_final($form_data, $results) {
             ['%s', '%s', '%s', '%s', '%s', '%s'],
             ['%d']
         );
-        
+
         if ($updated === false) {
+            error_log('[AUTOPILOT FINAL] ERROR en wpdb->update: ' . $wpdb->last_error);
             return [
                 'success' => false,
                 'error' => 'Error al actualizar la campaña: ' . $wpdb->last_error
             ];
         }
-        
-        
+
+        error_log('[AUTOPILOT FINAL] Campaña actualizada exitosamente. Rows affected: ' . $updated);
+
         return [
             'success' => true,
             'data' => [
@@ -473,6 +488,7 @@ function ap_step_update_campaign_final($form_data, $results) {
             ]
         ];
     } catch (Exception $e) {
+        error_log('[AUTOPILOT FINAL] EXCEPTION: ' . $e->getMessage());
         return [
             'success' => false,
             'error' => 'Error: ' . $e->getMessage()

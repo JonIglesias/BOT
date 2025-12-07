@@ -630,18 +630,24 @@ jQuery(document).ready(function($) {
                 id: 'save_initial',
                 text: 'Creando campaña...',
                 action: 'save_campaign_initial',
-                weight: 10
+                weight: 8
             },
             {
                 id: 'company_desc',
                 text: 'Generando descripción de empresa...',
                 action: 'generate_company_description',
-                weight: 18
+                weight: 15
             },
-            { id: 'keywords_seo', text: 'Generando keywords SEO...', action: 'generate_keywords_seo', weight: 18 },
-            { id: 'prompt_title', text: 'Creando prompt para títulos...', action: 'generate_title_prompt', weight: 18 },
-            { id: 'prompt_content', text: 'Creando prompt para contenido...', action: 'generate_content_prompt', weight: 18 },
-            { id: 'keywords_img', text: 'Generando keywords de imágenes...', action: 'generate_image_keywords', weight: 18 }
+            { id: 'keywords_seo', text: 'Generando keywords SEO...', action: 'generate_keywords_seo', weight: 15 },
+            { id: 'prompt_title', text: 'Creando prompt para títulos...', action: 'generate_title_prompt', weight: 15 },
+            { id: 'prompt_content', text: 'Creando prompt para contenido...', action: 'generate_content_prompt', weight: 15 },
+            { id: 'keywords_img', text: 'Generando keywords de imágenes...', action: 'generate_image_keywords', weight: 15 },
+            {
+                id: 'update_final',
+                text: 'Guardando campaña completa...',
+                action: 'update_campaign_final',
+                weight: 17
+            }
         ];
 
         // Total weight = 100
