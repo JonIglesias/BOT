@@ -1,250 +1,218 @@
 <?php
 /**
- * BaseEndpoint - Clase base para todos los endpoints de GeoWriter
+ * Clase base para todos los endpoints de generación
  *
- * Proporciona funcionalidad común:
- * - Validación de licencia
- * - Tracking de uso con precios reales
- * - Carga de prompts
- * - Reemplazo de variables
+ * Maneja validación de licencia, tracking de uso y respuestas comunes
  *
- * @version 2.0
+ * @package AutoPostsAPI
+ * @version 5.0
  */
 
 defined('API_ACCESS') or die('Direct access not permitted');
 
 require_once API_BASE_DIR . '/core/Response.php';
+require_once API_BASE_DIR . '/core/PromptManager.php';
 require_once API_BASE_DIR . '/models/License.php';
 require_once API_BASE_DIR . '/models/UsageTracking.php';
+require_once API_BASE_DIR . '/services/LicenseValidator.php';
+require_once API_BASE_DIR . '/services/TokenManager.php';
 require_once API_BASE_DIR . '/services/OpenAIService.php';
 
 abstract class BaseEndpoint {
 
-    protected $params;
+    protected $licenseKey;
     protected $license;
-    private $_openai; // Private para forzar lazy loading
+    protected $params;
+    protected $promptManager;
+    protected $openai;
 
     /**
-     * Constructor
+     * Constructor - Obtiene parámetros y prepara servicios
      */
-    public function __construct($params = []) {
-        // Si no se pasan parámetros, leer del request (compatibilidad v4)
-        if (empty($params)) {
-            $params = Response::getJsonInput();
-        }
-
-        $this->params = $params;
-        // No crear OpenAI aquí - se crea cuando se necesita (lazy loading)
-        // Esto evita errores de BD antes de validar licencia
+    public function __construct() {
+        $this->params = Response::getJsonInput();
+        $this->licenseKey = $this->params['license_key'] ?? $_GET['license_key'] ?? null;
+        $this->promptManager = new PromptManager();
+        $this->openai = new OpenAIService();
     }
 
     /**
-     * Magic getter for lazy loading
+     * Valida la licencia antes de ejecutar
+     *
+     * @throws Exception Si la licencia no es válida
      */
-    public function __get($name) {
-        if ($name === 'openai') {
-            if (!$this->_openai) {
-                $this->_openai = new OpenAIService();
-            }
-            return $this->_openai;
+    protected function validateLicense() {
+        if (!$this->licenseKey) {
+            Response::error('License key requerida', 401);
         }
-        return null;
+
+        $validator = new LicenseValidator();
+        $validation = $validator->validate($this->licenseKey);
+
+        if (!$validation['valid']) {
+            Response::error($validation['reason'] ?? 'Invalid license', 401);
+        }
+
+        $this->license = $validation['license'];
+    }
+
+    /**
+     * Registra el uso de tokens
+     *
+     * @param string $operationType Tipo de operación
+     * @param array $result Resultado de OpenAI
+     */
+    protected function trackUsage($operationType, $result) {
+        if (!$this->license) {
+            return;
+        }
+
+        $usage = $result['usage'] ?? [];
+        $tokensUsed = $usage['total_tokens'] ?? 0;
+
+        if ($tokensUsed > 0) {
+            // Obtener campaign_id y batch_id si existen
+            $campaignId = $this->params['campaign_id'] ?? null;
+            $campaignName = $this->params['campaign_name'] ?? null;
+            $batchId = $this->params['batch_id'] ?? null;
+
+            UsageTracking::record(
+                $this->license['id'],
+                $operationType,
+                $tokensUsed,
+                $usage['prompt_tokens'] ?? 0,
+                $usage['completion_tokens'] ?? 0,
+                $campaignId,
+                $campaignName,
+                $batchId
+            );
+
+            // Actualizar contador de licencia
+            License::incrementTokens($this->license['id'], $tokensUsed);
+        }
+    }
+
+    /**
+     * Carga un prompt desde archivo .md
+     *
+     * @param string $promptName Nombre del archivo (sin extensión)
+     * @return string Contenido del prompt
+     */
+    protected function loadPrompt($promptName) {
+        $promptFile = API_BASE_DIR . '/prompts/' . $promptName . '.md';
+
+        if (!file_exists($promptFile)) {
+            Logger::api('error', "Prompt file not found: {$promptName}.md");
+            return null;
+        }
+
+        return file_get_contents($promptFile);
+    }
+
+    /**
+     * Reemplaza variables en un prompt
+     *
+     * @param string $prompt Template del prompt
+     * @param array $variables Variables a reemplazar
+     * @return string Prompt con variables reemplazadas
+     */
+    protected function replaceVariables($prompt, $variables) {
+        foreach ($variables as $key => $value) {
+            $prompt = str_replace("{{$key}}", $value, $prompt);
+        }
+        return $prompt;
+    }
+
+    /**
+     * Obtiene contenido web de una URL
+     *
+     * @param string $url URL a obtener
+     * @return string|null Contenido o null si falla
+     */
+    protected function fetchWebContent($url) {
+        try {
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_MAXREDIRS => 3,
+                CURLOPT_TIMEOUT => 10,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; AutoPostsBot/1.0)'
+            ]);
+
+            $content = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode !== 200 || !$content) {
+                return null;
+            }
+
+            // Limpiar HTML
+            $content = strip_tags($content);
+            $content = preg_replace('/\s+/', ' ', $content);
+
+            // Limitar a 3000 caracteres
+            return substr(trim($content), 0, 3000);
+
+        } catch (Exception $e) {
+            Logger::api('error', 'Error fetching web content', [
+                'url' => $url,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Añade contexto de títulos previos de la cola al prompt
+     *
+     * Este método NO modifica el archivo .md, sino que inyecta
+     * dinámicamente al final del prompt los títulos ya generados
+     * en la campaña actual para evitar repeticiones.
+     *
+     * COMPORTAMIENTO:
+     * - Si NO hay campaign_id → Retorna prompt sin modificar (operación individual)
+     * - Si hay campaign_id pero sin títulos previos → Retorna prompt sin modificar
+     * - Si hay títulos previos → Añade sección al final con lista de títulos a evitar
+     *
+     * @param string $prompt Prompt base (ya procesado desde .md)
+     * @param string|null $campaignId ID de la campaña (opcional)
+     * @param int $limit Máximo de títulos previos a incluir (default: 10)
+     * @return string Prompt con contexto de cola añadido (si aplica)
+     */
+    protected function appendQueueContext($prompt, $campaignId = null, $limit = 10) {
+        // Si no hay campaign_id, es una operación individual - no añadir contexto
+        if (!$campaignId) {
+            return $prompt;
+        }
+
+        require_once API_BASE_DIR . '/services/TitleQueueManager.php';
+
+        // Obtener títulos previos de esta cola
+        $previousTitles = TitleQueueManager::getTitles($campaignId, $limit);
+
+        // Si no hay títulos previos, retornar prompt original
+        if (empty($previousTitles)) {
+            return $prompt;
+        }
+
+        // Construir sección de contexto (minimalista + instrucción clara)
+        $contextSection = "\n\n---\n\nPreviously generated titles (do NOT repeat these):\n";
+
+        foreach ($previousTitles as $index => $title) {
+            $contextSection .= "- " . $title . "\n";
+        }
+
+        $contextSection .= "\nGenerate ONE new title that is different from the above.\n";
+
+        return $prompt . $contextSection;
     }
 
     /**
      * Método abstracto que cada endpoint debe implementar
      */
     abstract public function handle();
-
-    /**
-     * Validar licencia
-     */
-    protected function validateLicense() {
-        $licenseKey = $this->params['license_key'] ?? null;
-        $domain = $this->params['domain'] ?? null;
-
-        if (!$licenseKey) {
-            Response::error('license_key is required', 400);
-        }
-
-        if (!$domain) {
-            Response::error('domain is required', 400);
-        }
-
-        try {
-            // Buscar licencia
-            $licenseModel = new License();
-            $license = $licenseModel->findByKey($licenseKey);
-
-            if (!$license) {
-                Response::error('Invalid license key', 401);
-            }
-
-            // Verificar estado
-            if ($license['status'] !== 'active') {
-                Response::error('License is not active', 401);
-            }
-
-            // Verificar dominio
-            $licenseDomain = rtrim(str_replace(['http://', 'https://', 'www.'], '', $license['domain']), '/');
-            $requestDomain = rtrim(str_replace(['http://', 'https://', 'www.'], '', $domain), '/');
-
-            if ($licenseDomain !== $requestDomain) {
-                Response::error('Domain mismatch', 401);
-            }
-
-            // Verificar tokens disponibles
-            $tokensUsed = $license['tokens_used_this_period'] ?? 0;
-            $tokensLimit = $license['tokens_limit'] ?? 0;
-
-            if ($tokensLimit > 0 && $tokensUsed >= $tokensLimit) {
-                Response::error('Token limit exceeded for this period', 402, [
-                    'tokens_used' => $tokensUsed,
-                    'tokens_limit' => $tokensLimit,
-                    'period_ends_at' => $license['period_ends_at'] ?? null
-                ]);
-            }
-
-            $this->license = $license;
-            return $license;
-        } catch (PDOException $e) {
-            // Log database error
-            if (class_exists('Logger')) {
-                Logger::error('Database error in validateLicense', [
-                    'error' => $e->getMessage(),
-                    'license_key' => substr($licenseKey, 0, 8) . '...'
-                ]);
-            } else {
-                error_log('Database error in validateLicense: ' . $e->getMessage());
-            }
-            Response::error('Database error occurred', 500);
-        } catch (Exception $e) {
-            // Log general error
-            error_log('Error in validateLicense: ' . $e->getMessage());
-            Response::error('An error occurred while validating license', 500);
-        }
-    }
-
-    /**
-     * Trackear uso de tokens con precios reales
-     *
-     * CRÍTICO: Debe guardar el modelo usado para calcular el precio correcto
-     */
-    protected function trackUsage($operationType, $openaiResult) {
-        if (!$this->license) {
-            return false;
-        }
-
-        try {
-            // Obtener datos de uso de OpenAI
-            $usage = $openaiResult['usage'] ?? [];
-            $tokensInput = $usage['prompt_tokens'] ?? 0;
-            $tokensOutput = $usage['completion_tokens'] ?? 0;
-            $tokensTotal = $usage['total_tokens'] ?? ($tokensInput + $tokensOutput);
-
-            // ⭐ CRÍTICO: Obtener el modelo REAL usado por OpenAI
-            // OpenAI devuelve el modelo exacto usado en la respuesta
-            $modelUsed = $openaiResult['model'] ?? OPENAI_MODEL;
-
-            // Incrementar tokens en la licencia
-            $licenseModel = new License();
-            $licenseModel->incrementTokens($this->license['id'], $tokensTotal);
-
-            // Registrar en usage_tracking con el modelo correcto
-            // UsageTracking calculará el precio desde api_model_prices
-            $trackingData = [
-                'license_id' => $this->license['id'],
-                'operation_type' => $operationType,
-                'tokens_input' => $tokensInput,
-                'tokens_output' => $tokensOutput,
-                'tokens_total' => $tokensTotal,
-                'model' => $modelUsed,  // ⭐ El modelo REAL usado
-                'sync_status_at_time' => 'fresh'
-            ];
-
-            // Si hay campaign_id en params, incluirlo
-            if (isset($this->params['campaign_id'])) {
-                $trackingData['campaign_id'] = $this->params['campaign_id'];
-            }
-
-            if (isset($this->params['campaign_name'])) {
-                $trackingData['campaign_name'] = $this->params['campaign_name'];
-            }
-
-            if (isset($this->params['batch_id'])) {
-                $trackingData['batch_id'] = $this->params['batch_id'];
-                $trackingData['batch_type'] = 'queue';
-            }
-
-            $usageTracking = new UsageTracking();
-            return $usageTracking->track($trackingData);
-        } catch (PDOException $e) {
-            // Log database error but don't fail the request
-            if (class_exists('Logger')) {
-                Logger::error('Database error in trackUsage', [
-                    'error' => $e->getMessage(),
-                    'operation' => $operationType
-                ]);
-            } else {
-                error_log('Database error in trackUsage: ' . $e->getMessage());
-            }
-            return false;
-        } catch (Exception $e) {
-            // Log general error but don't fail the request
-            error_log('Error in trackUsage: ' . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Cargar prompt desde archivo .md
-     */
-    protected function loadPrompt($promptName) {
-        $promptPath = API_BASE_DIR . '/prompts/' . $promptName . '.md';
-
-        if (!file_exists($promptPath)) {
-            error_log("Prompt file not found: {$promptPath}");
-            return false;
-        }
-
-        return file_get_contents($promptPath);
-    }
-
-    /**
-     * Reemplazar variables en template
-     *
-     * Formato: {{variable_name}}
-     */
-    protected function replaceVariables($template, $variables) {
-        foreach ($variables as $key => $value) {
-            $template = str_replace('{{' . $key . '}}', $value, $template);
-        }
-
-        return $template;
-    }
-
-    /**
-     * Añadir contexto de títulos previos (para evitar duplicados)
-     * Usado en generar-titulo.php
-     */
-    protected function appendQueueContext($prompt, $campaignId, $limit = 15) {
-        if (!$campaignId) {
-            return $prompt;
-        }
-
-        require_once API_BASE_DIR . '/services/TitleQueueManager.php';
-        $previousTitles = TitleQueueManager::getTitles($campaignId, $limit);
-
-        if (empty($previousTitles)) {
-            return $prompt;
-        }
-
-        $context = "\n\n---\nIMPORTANT: Avoid generating titles similar to these already generated:\n";
-        $context .= implode("\n", array_map(function($title, $index) {
-            return ($index + 1) . ". " . $title;
-        }, $previousTitles, array_keys($previousTitles)));
-        $context .= "\n---\n";
-
-        return $prompt . $context;
-    }
 }
