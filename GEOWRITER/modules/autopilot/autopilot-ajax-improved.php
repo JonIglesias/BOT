@@ -715,7 +715,7 @@ function ap_step_generate_queue_improved($api, $form_data, $results) {
         if ($inserted_count < count($titles)) {
         }
         
-        
+
         return [
             'success' => true,
             'data' => [
@@ -730,5 +730,221 @@ function ap_step_generate_queue_improved($api, $form_data, $results) {
             'success' => false,
             'error' => 'Error: ' . $e->getMessage()
         ];
+    }
+}
+
+/**
+ * ==========================================
+ * NUEVOS HANDLERS PARA AUTOPILOT-PROCESS.PHP
+ * ==========================================
+ */
+
+/**
+ * Handler: Crear campaña inicial
+ * Action: ap_autopilot_create_campaign
+ */
+add_action('wp_ajax_ap_autopilot_create_campaign', 'ap_autopilot_create_campaign_handler');
+
+function ap_autopilot_create_campaign_handler() {
+    check_ajax_referer('ap_autopilot', 'nonce');
+
+    try {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'ap_campaigns';
+
+        $name = sanitize_text_field($_POST['name'] ?? '');
+        $domain = sanitize_text_field($_POST['domain'] ?? '');
+        $niche = sanitize_text_field($_POST['niche'] ?? '');
+
+        if (empty($name) || empty($domain) || empty($niche)) {
+            wp_send_json_error('Datos incompletos');
+            return;
+        }
+
+        // Generar campaign_id único
+        $campaign_unique_id = 'campaign_' . time() . '_' . substr(md5(uniqid(rand(), true)), 0, 8);
+
+        // Crear campaña con datos mínimos
+        $data = [
+            'campaign_id' => $campaign_unique_id,
+            'name' => $name,
+            'domain' => $domain,
+            'niche' => $niche,
+            'image_provider' => ap_get_default_image_provider(),
+            'post_length' => 'medio',
+            'queue_generated' => 0,
+            'created_at' => current_time('mysql')
+        ];
+
+        $inserted = $wpdb->insert($table_name, $data);
+
+        if ($inserted === false) {
+            wp_send_json_error('Error al crear campaña: ' . $wpdb->last_error);
+            return;
+        }
+
+        $db_id = $wpdb->insert_id;
+
+        wp_send_json_success([
+            'campaign_id' => $db_id,
+            'campaign_unique_id' => $campaign_unique_id
+        ]);
+
+    } catch (Exception $e) {
+        wp_send_json_error('Error: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Handler: Generar campo individual
+ * Action: ap_autopilot_generate
+ */
+add_action('wp_ajax_ap_autopilot_generate', 'ap_autopilot_generate_handler');
+
+function ap_autopilot_generate_handler() {
+    check_ajax_referer('ap_autopilot', 'nonce');
+
+    try {
+        $field = sanitize_text_field($_POST['field'] ?? '');
+        $campaign_id = intval($_POST['campaign_id'] ?? 0);
+        $sources = json_decode(stripslashes($_POST['sources'] ?? '{}'), true);
+
+        if (empty($field) || !$campaign_id) {
+            wp_send_json_error('Datos incompletos');
+            return;
+        }
+
+        $api = new AP_API_Client();
+        $result = null;
+
+        // Generar batch_id para tracking
+        $batch_id = 'autopilot_' . $campaign_id . '_' . time();
+
+        // Obtener campaign_name de la BD
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'ap_campaigns';
+        $campaign = $wpdb->get_row($wpdb->prepare(
+            "SELECT name, niche FROM $table_name WHERE id = %d",
+            $campaign_id
+        ), ARRAY_A);
+
+        $campaign_name = $campaign['name'] ?? 'Campaña';
+        $niche = $campaign['niche'] ?? '';
+
+        switch ($field) {
+            case 'company_desc':
+                $domain = $sources['domain'] ?? '';
+                $result = $api->generate_company_description($domain, $campaign_id, $batch_id, $campaign_name);
+                if ($result && $result['success']) {
+                    $content = $result['description'] ?? '';
+                }
+                break;
+
+            case 'keywords_seo':
+                $company_desc = $sources['company_desc'] ?? '';
+                $result = $api->generate_seo_keywords($niche, $company_desc, $campaign_id, $campaign_name, $batch_id);
+                if ($result && $result['success']) {
+                    $content = $result['keywords'] ?? '';
+                }
+                break;
+
+            case 'prompt_titles':
+                $company_desc = $sources['company_desc'] ?? '';
+                $keywords_seo = $sources['keywords_seo'] ?? '';
+                $result = $api->generate_title_prompt($niche, $company_desc, $keywords_seo, $campaign_id, $campaign_name, $batch_id);
+                if ($result && $result['success']) {
+                    $content = $result['prompt'] ?? '';
+                }
+                break;
+
+            case 'prompt_content':
+                $company_desc = $sources['company_desc'] ?? '';
+                $keywords_seo = $sources['keywords_seo'] ?? '';
+                $result = $api->generate_content_prompt($niche, $company_desc, $keywords_seo, $campaign_id, $campaign_name, $batch_id);
+                if ($result && $result['success']) {
+                    $content = $result['prompt'] ?? '';
+                }
+                break;
+
+            case 'keywords_images':
+                $company_desc = $sources['company_desc'] ?? '';
+                $keywords_seo = $sources['keywords_seo'] ?? '';
+                $result = $api->generate_campaign_image_keywords($niche, $company_desc, $campaign_id, $campaign_name, $batch_id, $keywords_seo);
+                if ($result && $result['success']) {
+                    $content = $result['keywords'] ?? '';
+                }
+                break;
+
+            default:
+                wp_send_json_error('Campo no válido: ' . $field);
+                return;
+        }
+
+        if (!$result || !$result['success']) {
+            wp_send_json_error($result['error'] ?? 'Error al generar ' . $field);
+            return;
+        }
+
+        wp_send_json_success([
+            'content' => $content
+        ]);
+
+    } catch (Exception $e) {
+        wp_send_json_error('Error: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Handler: Actualizar campaña con todos los datos generados
+ * Action: ap_autopilot_update_campaign
+ */
+add_action('wp_ajax_ap_autopilot_update_campaign', 'ap_autopilot_update_campaign_handler');
+
+function ap_autopilot_update_campaign_handler() {
+    check_ajax_referer('ap_autopilot', 'nonce');
+
+    try {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'ap_campaigns';
+
+        $data = json_decode(stripslashes($_POST['data'] ?? '{}'), true);
+
+        if (empty($data) || !isset($data['campaign_id'])) {
+            wp_send_json_error('Datos incompletos');
+            return;
+        }
+
+        $campaign_id = intval($data['campaign_id']);
+
+        // Preparar datos para actualizar
+        $update_data = [
+            'company_desc' => $data['company_desc'] ?? '',
+            'keywords_seo' => $data['keywords_seo'] ?? '',
+            'prompt_titles' => $data['prompt_titles'] ?? '',
+            'prompt_content' => $data['prompt_content'] ?? '',
+            'keywords_images' => $data['keywords_images'] ?? '',
+            'updated_at' => current_time('mysql')
+        ];
+
+        $updated = $wpdb->update(
+            $table_name,
+            $update_data,
+            ['id' => $campaign_id],
+            ['%s', '%s', '%s', '%s', '%s', '%s'],
+            ['%d']
+        );
+
+        if ($updated === false) {
+            wp_send_json_error('Error al actualizar campaña: ' . $wpdb->last_error);
+            return;
+        }
+
+        wp_send_json_success([
+            'message' => 'Campaña actualizada correctamente',
+            'campaign_id' => $campaign_id
+        ]);
+
+    } catch (Exception $e) {
+        wp_send_json_error('Error: ' . $e->getMessage());
     }
 }
