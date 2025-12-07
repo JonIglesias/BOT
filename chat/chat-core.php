@@ -23,15 +23,14 @@ if (!function_exists('phsbot_setting')) {
 /* -- Defaults del chat -- */
 function phsbot_chat_defaults(){
   return array(
-    'model'            => 'gpt-4.1-mini',
-    'temperature'      => 0.5,
+    // NOTA: model, temperature, max_tokens ahora se configuran en la API5
+    // El plugin ya no gestiona estos parámetros; se delegan completamente a la API
     'tone'             => 'profesional',
     'welcome'          => 'Hola, soy PHSBot. ¿En qué puedo ayudarte?',
     'allow_html'       => 1,
     'allow_elementor'  => 1,
     'allow_live_fetch' => 1,
     'max_history'      => 10,
-    'max_tokens'       => 1400,
     'max_height_vh'    => 70,
     'anchor_paragraph' => 1,
   );
@@ -89,88 +88,6 @@ function phsbot_chat_build_welcome_i18n($text){
 
   return $out;
 }
-}
-
-/* -- Traducción runtime del saludo con hash anti-stale -- */
-if (!function_exists('phsbot_chat_translate_welcome_runtime')) {
-function phsbot_chat_translate_welcome_runtime($lang){
-  $lang = strtolower(substr((string)$lang, 0, 2));
-  $opt  = phsbot_chat_get_settings();
-  $base = trim((string)($opt['welcome'] ?? ''));
-  $map  = (array)($opt['welcome_i18n'] ?? array());
-  if ($lang === '') return $base;
-  if ($base === '') return '';
-
-  $hash_current = md5(wp_strip_all_tags($base));
-  $hash_stored  = isset($opt['welcome_hash']) ? (string)$opt['welcome_hash'] : '';
-  if ($hash_stored !== $hash_current) {
-    $map = array();
-  }
-
-  if (!empty($map[$lang])) return (string)$map[$lang];
-
-  $api = (string) phsbot_setting('openai_api_key', '');
-  if (!$api) return $base;
-
-  $prompt = "Translate the following greeting to the target language (ISO-639-1): ".$lang.".\\n".
-            "Preserve emojis and tone. Return ONLY JSON: {\"t\":\"...\"}.\\n<<<".$base.">>>";
-
-  $body = array(
-    'model' => 'gpt-4o-mini',
-    'temperature' => 0.2,
-    'messages' => array(
-      array('role'=>'system','content'=>'You are a precise translator. Output strictly valid JSON only.'),
-      array('role'=>'user','content'=>$prompt),
-    ),
-    'max_tokens' => 200,
-  );
-
-  $res = wp_remote_post('https://api.openai.com/v1/chat/completions', array(
-    'timeout' => 20,
-    'headers' => array(
-      'Authorization' => 'Bearer '.$api,
-      'Content-Type'  => 'application/json',
-    ),
-    'body' => wp_json_encode($body),
-  ));
-  if (is_wp_error($res)) return $base;
-  if (wp_remote_retrieve_response_code($res) !== 200) return $base;
-
-  $json = json_decode(wp_remote_retrieve_body($res), true);
-  $txt  = trim((string)($json['choices'][0]['message']['content'] ?? ''));
-  $start = strpos($txt,'{'); $end = strrpos($txt,'}');
-  if ($start!==false && $end!==false) $txt = substr($txt, $start, $end-$start+1);
-  $obj = json_decode($txt, true);
-  $t   = isset($obj['t']) ? trim(wp_strip_all_tags((string)$obj['t'])) : '';
-
-  if ($t === '') return $base;
-
-  $map[$lang] = $t;
-  $opt['welcome_i18n'] = $map;
-  $opt['welcome_hash'] = $hash_current;
-  update_option(PHSBOT_CHAT_OPT, $opt);
-
-  return $t;
-}
-}
-
-/* -- ¿Usa API /responses? (GPT-5*) -- */
-function phsbot_model_uses_responses_api($model){
-  return (bool) preg_match('/^gpt-?5/i', (string)$model);
-}
-
-/* -- Convierte messages[] a input[] (Responses) -- */
-function phsbot_messages_to_responses_input($messages){
-  $out = array();
-  foreach ((array)$messages as $m){
-    $role = isset($m['role']) && in_array($m['role'], array('system','user','assistant'), true) ? $m['role'] : 'user';
-    $text = (string)($m['content'] ?? '');
-    $out[] = array(
-      'role'    => $role,
-      'content' => array(array('type'=>'text', 'text'=>$text)),
-    );
-  }
-  return $out;
 }
 
 /* -- Lee opciones fusionadas con defaults -- */
@@ -238,17 +155,15 @@ function phsbot_ajax_chat(){
   $ctx_sel   = $lim($ctx['selection'] ?? '', 400);
   $ctx_main  = $lim($ctx['main_excerpt'] ?? '', 1200);
 
-  $model = (string) ($chat['model'] ?? 'gpt-4o-mini');
-  $temp  = floatval($chat['temperature'] ?? 0.5);
+  // NOTA: model, temperature, max_tokens se configuran en la API5
+  // Solo gestionamos tone y system_prompt a nivel de plugin
   $tone  = (string)  ($chat['tone'] ?? 'profesional');
   $sys_p = (string)  ($chat['system_prompt'] ?? '');
-  $max_t = intval($chat['max_tokens'] ?? 1400);
-  if ($max_t < 200) $max_t = 200;
 
   $kb = (string) get_option(PHSBOT_KB_DOC_OPT, '');
   if ($kb !== '') $kb = wp_strip_all_tags($kb);
 
-  // Live fetch (si está habilitado)
+  // Live fetch (si está habilitado) con rate limiting via transients
   $live = '';
   if (!empty($chat['allow_live_fetch']) && !empty($url)){
     $allowed = phsbot_setting('allowed_domains', array());
@@ -266,11 +181,21 @@ function phsbot_ajax_chat(){
         if (substr('.'.$domain_check, -strlen('.'.$ad)) === '.'.$ad || $domain_check===$ad) { $ok=true; break; }
       }
       if ($ok){
-        $res = wp_remote_get($url, array('timeout'=>8));
-        if (!is_wp_error($res) && wp_remote_retrieve_response_code($res)===200){
-          $live = wp_strip_all_tags(wp_remote_retrieve_body($res));
-          $live = preg_replace('/\s+/',' ', $live);
-          $live = wp_trim_words($live, 1200, '…');
+        // Rate limiting: cachear contenido fetched por 10 minutos
+        $cache_key = 'phsbot_live_fetch_' . md5($url);
+        $cached = get_transient($cache_key);
+
+        if ($cached !== false) {
+          $live = $cached;
+        } else {
+          $res = wp_remote_get($url, array('timeout'=>8));
+          if (!is_wp_error($res) && wp_remote_retrieve_response_code($res)===200){
+            $live = wp_strip_all_tags(wp_remote_retrieve_body($res));
+            $live = preg_replace('/\s+/',' ', $live);
+            $live = wp_trim_words($live, 1200, '…');
+            // Cachear por 10 minutos para evitar SSRF abuse
+            set_transient($cache_key, $live, 10 * MINUTE_IN_SECONDS);
+          }
         }
       }
     }
@@ -317,6 +242,8 @@ function phsbot_ajax_chat(){
   if ($live) $kb_full .= "\n\nContenido de la URL:\n".$live;
 
   // Payload para la API5
+  // NOTA: model, temperature, max_tokens ya no se envían desde el plugin
+  // La API5 gestiona estos parámetros según el plan del cliente
   $api_payload = array(
     'license_key' => $bot_license,
     'domain' => $domain,
@@ -329,9 +256,6 @@ function phsbot_ajax_chat(){
       'page_title' => $ctx_title
     ),
     'settings' => array(
-      'model' => $model,
-      'temperature' => $temp,
-      'max_tokens' => $max_t,
       'system_prompt' => $system
     )
   );

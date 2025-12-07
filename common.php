@@ -10,6 +10,12 @@ if (!defined('PHSBOT_DIR'))  define('PHSBOT_DIR',  plugin_dir_path(__FILE__));
 if (!defined('PHSBOT_URL'))  define('PHSBOT_URL',  plugins_url('', __FILE__));
 if (!defined('PHSBOT_SLUG')) define('PHSBOT_SLUG', 'phsbot');
 
+/* Settings Keys (globalizadas) */
+if (!defined('PHSBOT_MAIN_SETTINGS_OPT')) define('PHSBOT_MAIN_SETTINGS_OPT', 'phsbot_settings');
+if (!defined('PHSBOT_SETTINGS_OPT'))      define('PHSBOT_SETTINGS_OPT',      'phsbot_settings');
+if (!defined('PHSBOT_CHAT_OPT'))          define('PHSBOT_CHAT_OPT',          'phsbot_chat_settings');
+if (!defined('PHSBOT_KB_DOC_OPT'))        define('PHSBOT_KB_DOC_OPT',        'phsbot_kb_document');
+
 /* I18N */
 if (!function_exists('phsbot_load_textdomain')) {
     function phsbot_load_textdomain() {
@@ -60,7 +66,6 @@ $__phsbot_modules = array(
     'estadisticas',
     'integrations',
     'inject',
-    'logs',
     'formuchat',
     'voice_ui',
     'mobile_patch',

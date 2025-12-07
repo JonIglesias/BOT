@@ -490,7 +490,7 @@ JS;
                 'chat_height'        => '520px',
                 'bubble_font_size'   => 15,
 
-                'openai_api_key'     => '',
+                // NOTA: openai_api_key eliminado - ya no se usa (API V5 maneja esto)
                 'bot_license_key'    => '',
                 'bot_api_url'        => 'https://bocetosmarketing.com/api_claude_5/index.php',
                 'telegram_bot_token' => '',
